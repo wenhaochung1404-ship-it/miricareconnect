@@ -4,24 +4,6 @@ import { translations } from './translations';
 
 declare const firebase: any;
 
-// --- GOOGLE SHEETS SYNC FUNCTION ---
-// This function sends data to your specific Web App URL automatically
-const syncToGoogleSheet = async (data: any) => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx22cF9Y25Bas_bZs8LloVJWHEUfHomhVe7hLbyt08-OSz_ywwKSgK7zjcSQcBcOZk2mw/exec";
-    try {
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors', // Essential for Google Apps Script
-            cache: 'no-cache',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        console.log("Auto-sync to Google Sheets successful");
-    } catch (err) {
-        console.error("Google Sheets Sync Error:", err);
-    }
-};
-
 // --- UTILITY: Image Optimization (Canvas) ---
 const optimizeImageForUpload = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -32,23 +14,28 @@ const optimizeImageForUpload = (file: File): Promise<Blob> => {
             img.src = e.target?.result as string;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 512;
+                const MAX_WIDTH = 512; // Optimized for header size
                 let width = img.width;
                 let height = img.height;
+
                 if (width > MAX_WIDTH) {
                     height *= MAX_WIDTH / width;
                     width = MAX_WIDTH;
                 }
+
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 if (!ctx) return reject(new Error("Canvas Context Error"));
+
+                // Transparent background for PNG/WebP
                 ctx.clearRect(0, 0, width, height);
                 ctx.drawImage(img, 0, 0, width, height);
+
                 canvas.toBlob((blob) => {
                     if (blob) resolve(blob);
                     else reject(new Error("Compression failed"));
-                }, 'image/webp', 0.85);
+                }, 'image/webp', 0.85); // High quality WebP
             };
             img.onerror = () => reject(new Error("Image loading failed"));
         };
@@ -58,6 +45,8 @@ const optimizeImageForUpload = (file: File): Promise<Blob> => {
 
 const Logo: React.FC<{ className?: string, iconSize?: string, customUrl?: string }> = ({ className, iconSize = "text-xl", customUrl }) => {
     const [srcIndex, setSrcIndex] = useState(0);
+    
+    // Priority: Custom URL (Firebase) -> Local logo.png -> Cloud Backup
     const sources = useMemo(() => {
         const list = [];
         if (customUrl) list.push(customUrl);
@@ -66,102 +55,58 @@ const Logo: React.FC<{ className?: string, iconSize?: string, customUrl?: string
         return list;
     }, [customUrl]);
 
-    useEffect(() => { setSrcIndex(0); }, [customUrl]);
+    useEffect(() => {
+        setSrcIndex(0);
+    }, [customUrl]);
+
     const handleError = () => {
-        if (srcIndex < sources.length - 1) setSrcIndex(srcIndex + 1);
-        else setSrcIndex(-1);
+        if (srcIndex < sources.length - 1) {
+            setSrcIndex(srcIndex + 1);
+        } else {
+            setSrcIndex(-1); // Use icon fallback
+        }
     };
 
     if (srcIndex === -1) {
         return (
-            <div className={`${className} bg-white flex items-center justify-center text-[#3498db] shadow-inner border border-gray-100`}>
+            <div className={`${className} bg-white flex items-center justify-center text-[#3498db] shadow-inner overflow-hidden border border-gray-100`}>
                 <i className={`fas fa-hand-holding-heart ${iconSize}`}></i>
             </div>
         );
     }
-    return ( <img src={sources[srcIndex]} alt="Logo" className={`${className} object-contain`} onError={handleError} crossOrigin="anonymous" /> );
+
+    return (
+        <img 
+            src={sources[srcIndex]} 
+            alt="Miri Care Connect Logo" 
+            className={`${className} object-contain`}
+            onError={handleError}
+            crossOrigin="anonymous"
+        />
+    );
 };
+
+const MenuItem: React.FC<{icon: string, label: string, onClick: () => void, active?: boolean}> = ({icon, label, onClick, active}) => (
+    <button onClick={onClick} className={`flex items-center gap-3 sm:gap-5 p-3 sm:p-5 rounded-xl sm:rounded-2xl transition-all ${active ? 'bg-[#3498db] text-white shadow-xl scale-105' : 'text-gray-400 hover:bg-gray-50 hover:text-[#2c3e50]'}`}>
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-xl ${active ? 'bg-white/20' : 'bg-gray-100'}`}>
+            <i className={`fas fa-${icon} text-xs sm:text-sm`}></i>
+        </div>
+        <span className="font-black text-[10px] sm:text-xs uppercase tracking-widest text-left">{label}</span>
+    </button>
+);
 
 const AdminInput: React.FC<{label: string, value: any, onChange?: (v: any) => void, type?: string, disabled?: boolean, placeholder?: string, min?: string}> = ({label, value, onChange, type = 'text', disabled = false, placeholder, min}) => (
     <div className="space-y-2">
         <label className="text-[8px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">{label}</label>
         <input 
-            type={type} value={value} disabled={disabled} placeholder={placeholder} min={min}
+            type={type} 
+            value={value} 
+            disabled={disabled}
+            placeholder={placeholder}
+            min={min}
             onChange={e => onChange?.(type === 'number' ? Number(e.target.value) : e.target.value)}
             className={`w-full p-3 rounded-xl border-2 font-bold transition-all text-sm outline-none ${disabled ? 'bg-gray-50 border-gray-50 text-gray-300' : 'bg-white border-gray-100 focus:border-[#3498db] text-[#2c3e50]'}`}
         />
-    </div>
-);
-
-const PhotoGalleryPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
-    const [galleries, setGalleries] = useState<any[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [header, setHeader] = useState('');
-    const [mediaItems, setMediaItems] = useState<string[]>(['', '', '']);
-    const [saving, setSaving] = useState(false);
-
-    const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
-
-    useEffect(() => {
-        if (typeof firebase === 'undefined' || !firebase.firestore) return;
-        const db = firebase.firestore();
-        const unsub = db.collection('galleries').onSnapshot((snap: any) => {
-            const data = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-            data.sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-            setGalleries(data);
-        });
-        return unsub;
-    }, []);
-
-    const handleSave = async () => {
-        if (typeof firebase === 'undefined' || !firebase.firestore) return;
-        setSaving(true);
-        try {
-            const filteredItems = mediaItems.filter(item => item.trim() !== '');
-            const db = firebase.firestore();
-            const payload = {
-                header,
-                items: filteredItems,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            // Save to Firebase
-            if (editingId) {
-                await db.collection('galleries').doc(editingId).update(payload);
-            } else {
-                await db.collection('galleries').add({
-                    ...payload,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-
-            // --- AUTO-SAVE TO GOOGLE SHEETS ---
-            // This captures the real gallery data and sends it to the "redeem" sheet (as specified in your URL)
-            await syncToGoogleSheet({
-                sheetType: "redeem", // Maps to your "redeem" tab
-                fullName: user?.displayName || "Admin", // Pulls name automatically
-                itemName: header, // Name of the gallery/item
-                status: "confirmed",
-                userId: user?.uid || "N/A"
-            });
-
-            setIsModalOpen(false);
-        } catch (e: any) {
-            alert("Save failed: " + e.message);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    // ... (rest of your gallery UI logic: openAdd, openEdit, updateItem, etc.)
-    return (
-        <div className="max-w-6xl mx-auto py-8 px-4">
-            {/* Gallery Content */}
-            <button onClick={handleSave}>Post Group</button>
-        </div>
-    );
-};
     </div>
 );
 

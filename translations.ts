@@ -351,7 +351,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "logout": "Log Keluar",
         "home": "Rumah",
         "photo_gallery": "GAMBAR",
-        "coming_soon": "DATAI IS COME!!!!",
+        "coming_soon": "DEKA DATA!!!!",
         "request_help": "Minta Tulung",
         "offer_help": "Meri Tulung",
         "points_shop": "Kedai Mata",
