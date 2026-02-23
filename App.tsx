@@ -4,6 +4,8 @@ import { translations } from './translations';
 
 declare const firebase: any;
 
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyFk3dq1LQ7XmSqfLPZH2MSn3PEmu2jk_Fh6_vtccCvjIi-eCwIWoXkSwtdvu1slVw/exec";
+
 // --- UTILITY: Image Optimization (Canvas) ---
 const optimizeImageForUpload = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -505,7 +507,6 @@ export const App: React.FC = () => {
     
     // --- GOOGLE SHEETS INTEGRATION ---
     const [sheetInventory, setSheetInventory] = useState<string[]>([]);
-    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyFk3dq1LQ7XmSqfLPZH2MSn3PEmu2jk_Fh6_vtccCvjIi-eCwIWoXkSwtdvu1slVw/exec';
 
     useEffect(() => {
         const fetchActiveItems = async () => {
@@ -520,26 +521,53 @@ export const App: React.FC = () => {
         fetchActiveItems();
     }, []);
 
-    const logRedemptionToSheets = async (selectedItem: string) => {
+    // 1. Function to log Redemptions (Matches your 'Redemptions' tab)
+    const syncRedemption = async (userData: any, itemName: string) => {
         try {
             const payload = {
-                username: user?.displayName || "Guest User",
-                email: user?.email || "No Email",
-                item: selectedItem // This records the name as a string for permanent history
+                username: userData?.displayName || "Guest",
+                email: userData?.email || "N/A",
+                item: itemName
             };
 
             await fetch(SHEET_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Required for Google Apps Script Web Apps
+                mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            console.log("Logged to Google Sheets permanently.");
+            console.log("Redemption synced to Google Sheets");
         } catch (error) {
-            console.error("Sheet Logging Error:", error);
+            console.error("Sync Error:", error);
         }
     };
 
+    // 2. Function to log New Users (Matches your 'Users' tab)
+    const syncNewUser = async (newUser: any) => {
+        try {
+            const payload = {
+                type: "REGISTRATION",
+                displayName: newUser.displayName,
+                email: newUser.email,
+                phone: newUser.phone,
+                userClass: newUser.userClass,
+                birthdate: newUser.birthdate,
+                address: newUser.address
+            };
+
+            await fetch(SHEET_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            console.log("New user synced to Google Sheets");
+        } catch (error) {
+            console.error("Registration Sync Error:", error);
+        }
+    };
+    // ---------------------------------
+    
     // BRANDING STATES
     const [branding, setBranding] = useState<{logoUrl?: string}>({});
     const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
@@ -1173,7 +1201,7 @@ export const App: React.FC = () => {
                 </div>
             )}
 
-            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} t={t} lang={lang} />}
+            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} t={t} lang={lang} onRegisterSuccess={syncNewUser} />}
             
             {isQuickOfferOpen && user && !isKoperasi && (
                 <div className="fixed inset-0 bg-black/80 z-[600] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setIsQuickOfferOpen(false)}>
@@ -1263,7 +1291,7 @@ export const App: React.FC = () => {
                                 }
                                 transaction.set(counterRef, { count: currentCount }, { merge: true });
                                 
-                                rdCode = `RD${String(currentCount).padStart(4, '0')}`;
+                                rdCode = `RD-${String(currentCount).padStart(4, '0')}`;
                                 
                                 transaction.update(userRef, { points: userDoc.data().points - finalItemCost });
                                 transaction.set(db.collection('redeem_history').doc(), {
@@ -1279,7 +1307,7 @@ export const App: React.FC = () => {
                             });
                             
                             // Log to Google Sheets after successful Firebase update
-                            await logRedemptionToSheets(finalItemName);
+                            await syncRedemption(user, finalItemName);
 
                             setItemToRedeem(null);
                             setRedeemSuccessCode(rdCode);
@@ -1291,7 +1319,7 @@ export const App: React.FC = () => {
     );
 };
 
-const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language}> = ({onClose, t, lang}) => {
+const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegisterSuccess: (data: any) => void}> = ({onClose, t, lang, onRegisterSuccess}) => {
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [data, setData] = useState({ email: '', password: '', name: '', birthdate: '', phone: '', address: '', userClass: '' });
     const [loading, setLoading] = useState(false);
@@ -1322,12 +1350,17 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language}> = ({onC
                 
                 if (user) {
                     await user.sendEmailVerification();
-                    await firebase.firestore().collection('users').doc(user.uid).set({ 
+                    const userData = { 
                         email: dataInput.email, displayName: dataInput.name, points: 5, birthdate: dataInput.birthdate, 
                         phone: dataInput.phone, address: dataInput.address, userClass: dataInput.userClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
                         isKoperasi: dataInput.email === 'koperasi@gmail.com'
-                    });
+                    };
+                    await firebase.firestore().collection('users').doc(user.uid).set(userData);
+                    
+                    // Sync to Google Sheets
+                    await onRegisterSuccess(userData);
+
                     await firebase.auth().signOut();
                     alert("Verification message sent, please check your moe email spam folder page");
                     setMode('login');
