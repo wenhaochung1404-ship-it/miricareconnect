@@ -503,6 +503,43 @@ export const App: React.FC = () => {
     const [emailVerified, setEmailVerified] = useState(true);
     const [redeemSuccessCode, setRedeemSuccessCode] = useState<string | null>(null);
     
+    // --- GOOGLE SHEETS INTEGRATION ---
+    const [sheetInventory, setSheetInventory] = useState<string[]>([]);
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyFk3dq1LQ7XmSqfLPZH2MSn3PEmu2jk_Fh6_vtccCvjIi-eCwIWoXkSwtdvu1slVw/exec';
+
+    useEffect(() => {
+        const fetchActiveItems = async () => {
+            try {
+                const res = await fetch(SHEET_URL);
+                const items = await res.json();
+                setSheetInventory(items); // Updates the UI with current items only
+            } catch (e) {
+                console.error("Could not load inventory from Sheets", e);
+            }
+        };
+        fetchActiveItems();
+    }, []);
+
+    const logRedemptionToSheets = async (selectedItem: string) => {
+        try {
+            const payload = {
+                username: user?.displayName || "Guest User",
+                email: user?.email || "No Email",
+                item: selectedItem // This records the name as a string for permanent history
+            };
+
+            await fetch(SHEET_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Required for Google Apps Script Web Apps
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            console.log("Logged to Google Sheets permanently.");
+        } catch (error) {
+            console.error("Sheet Logging Error:", error);
+        }
+    };
+
     // BRANDING STATES
     const [branding, setBranding] = useState<{logoUrl?: string}>({});
     const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
@@ -981,7 +1018,7 @@ export const App: React.FC = () => {
                         {page === 'home' && !isKoperasi && <HomePage t={t} user={user} />}
                         {page === 'gallery' && !isKoperasi && <PhotoGalleryPage t={t} user={user} />}
                         {page === 'profile' && !isKoperasi && <ProfilePage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onNavigate={() => {}} />}
-                        {page === 'shop' && <ShopPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onRedeemConfirm={setItemToRedeem} />}
+                        {page === 'shop' && <ShopPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onRedeemConfirm={setItemToRedeem} sheetInventory={sheetInventory} />}
                         {page === 'history' && !isKoperasi && <HistoryPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} />}
                         {page === 'guide' && !isKoperasi && <UserGuidePage t={t} isAdmin={isAdmin} />}
                         {page === 'admin' && (isAdmin || isKoperasi) && <div className="bg-white p-8 rounded-[2.5rem] shadow-xl"><AdminPanelContent t={t} user={user} isKoperasiMenu={isKoperasi} /></div>}
@@ -1178,17 +1215,22 @@ export const App: React.FC = () => {
             {itemToRedeem && (
                 <RedeemConfirmModal 
                     item={itemToRedeem} user={user!} t={t} onCancel={() => setItemToRedeem(null)} 
-                    onConfirm={async (fullName, userClass) => {
+                    sheetInventory={sheetInventory}
+                    onConfirm={async (fullName, userClass, selectedItemName) => {
                         if (typeof firebase === 'undefined' || !firebase.firestore) return;
                         const db = firebase.firestore();
                         try {
                             const userRef = db.collection('users').doc(user!.uid);
                             const counterRef = db.collection('counters').doc('redemptions');
                             
+                            // Use the selected item name from the modal's dropdown
+                            const finalItemName = selectedItemName || itemToRedeem.name;
+                            const finalItemCost = itemToRedeem.name === finalItemName ? itemToRedeem.cost : 0; // Default cost 0 for sheet items
+
                             let rdCode = '';
                             await db.runTransaction(async (transaction: any) => {
                                 const userDoc = await transaction.get(userRef);
-                                if (userDoc.data().points < itemToRedeem.cost) throw new Error("Not enough points");
+                                if (userDoc.data().points < finalItemCost) throw new Error("Not enough points");
                                 
                                 // Monthly Point Limit Check (200 pts)
                                 const now = new Date();
@@ -1210,7 +1252,7 @@ export const App: React.FC = () => {
                                     }
                                 });
 
-                                if (monthlyTotal + itemToRedeem.cost > 200) {
+                                if (monthlyTotal + finalItemCost > 200) {
                                     throw new Error(t('points_limit_msg'));
                                 }
 
@@ -1223,18 +1265,22 @@ export const App: React.FC = () => {
                                 
                                 rdCode = `RD${String(currentCount).padStart(4, '0')}`;
                                 
-                                transaction.update(userRef, { points: userDoc.data().points - itemToRedeem.cost });
+                                transaction.update(userRef, { points: userDoc.data().points - finalItemCost });
                                 transaction.set(db.collection('redeem_history').doc(), {
                                     userId: user!.uid, 
                                     fullName, 
                                     userClass, 
-                                    itemName: itemToRedeem.name, 
-                                    itemPoints: itemToRedeem.cost, 
+                                    itemName: finalItemName, 
+                                    itemPoints: finalItemCost, 
                                     rdCode: rdCode,
                                     redeemedAt: firebase.firestore.FieldValue.serverTimestamp(),
                                     status: 'pending'
                                 });
                             });
+                            
+                            // Log to Google Sheets after successful Firebase update
+                            await logRedemptionToSheets(finalItemName);
+
                             setItemToRedeem(null);
                             setRedeemSuccessCode(rdCode);
                         } catch (e: any) { alert(e.message); }
@@ -1510,7 +1556,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
     );
 };
 
-const ShopPage: React.FC<{user: any, t: any, onAuth: () => void, onRedeemConfirm: (item: any) => void}> = ({user, t, onAuth, onRedeemConfirm}) => {
+const ShopPage: React.FC<{user: any, t: any, onAuth: () => void, onRedeemConfirm: (item: any) => void, sheetInventory: string[]}> = ({user, t, onAuth, onRedeemConfirm, sheetInventory}) => {
     const [rewards, setRewards] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -1597,6 +1643,31 @@ const ShopPage: React.FC<{user: any, t: any, onAuth: () => void, onRedeemConfirm
                         {t('add_reward')}
                     </button>
                 )}
+            </div>
+
+            {/* Google Sheets Inventory Dropdown */}
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Select Item to Redeem (Live Inventory)</label>
+                    <select 
+                        className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-[#3498db] transition-all"
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val) {
+                                // We wrap the string in an object to match the expected 'item' structure
+                                onRedeemConfirm({ name: val, cost: 0, color: '#3498db' });
+                            }
+                        }}
+                        value=""
+                    >
+                        <option value="">-- Choose an available item --</option>
+                        {sheetInventory.map((item, index) => (
+                            <option key={index} value={item}>
+                                {item}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {isShopOpen && (
@@ -1865,19 +1936,37 @@ const EmptyHistory: React.FC<{t: any}> = ({t}) => (
     </div>
 );
 
-const RedeemConfirmModal: React.FC<{item: any, user: any, t: any, onCancel: () => void, onConfirm: (name: string, cls: string) => void}> = ({item, user, t, onCancel, onConfirm}) => {
+const RedeemConfirmModal: React.FC<{item: any, user: any, t: any, onCancel: () => void, onConfirm: (name: string, cls: string, selectedItem: string) => void, sheetInventory: string[]}> = ({item, user, t, onCancel, onConfirm, sheetInventory}) => {
     const [name, setName] = useState(user.displayName || '');
     const [cls, setCls] = useState(user.userClass || '');
+    const [selectedItem, setSelectedItem] = useState(item?.name || '');
+
     return (
         <div className="fixed inset-0 bg-black/80 z-[700] flex items-center justify-center p-4 backdrop-blur-md">
             <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-in zoom-in">
-                <h3 className="text-2xl font-black uppercase italic text-[#2c3e50] mb-6">{t('confirm')} {item.name}?</h3>
+                <h3 className="text-2xl font-black uppercase italic text-[#2c3e50] mb-6">{t('confirm')} {selectedItem || item.name}?</h3>
                 <div className="space-y-4 mb-8">
                     <AdminInput label={t('full_name')} value={name} onChange={setName} />
                     <AdminInput label={t('class_label')} value={cls} onChange={setCls} />
+                    
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{t('select_item_to_redeem')}</label>
+                        <select 
+                            className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-[#3498db] transition-all"
+                            onChange={(e) => setSelectedItem(e.target.value)}
+                            value={selectedItem || ""}
+                        >
+                            <option value="">{t('choose_available_item')}</option>
+                            {sheetInventory.map((item, index) => (
+                                <option key={index} value={item}>
+                                    {item}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
                 <div className="flex gap-4">
-                    <button onClick={() => onConfirm(name, cls)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase shadow-lg active:scale-95">{t('confirm')}</button>
+                    <button onClick={() => onConfirm(name, cls, selectedItem)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase shadow-lg active:scale-95">{t('confirm')}</button>
                     <button onClick={onCancel} className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase active:scale-95">{t('cancel')}</button>
                 </div>
             </div>

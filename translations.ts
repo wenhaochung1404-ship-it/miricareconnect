@@ -114,7 +114,9 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "Confirm giving {pts} points to {user}?",
         "points_limit_msg": "you can only redeem 200 points of items in this month , please try to redeem next month",
         "shop_closed_msg": "the points shop is currently close , it will reopen on every month 1st day",
-        "shop_open_warning": "the points shop will open until 21st only , please redeem as fast as possible , you can only redeem items from 1st to 21st of the month , the items can only be used started from 22nd of the month until the end of the month"
+        "shop_open_warning": "the points shop will open until 21st only , please redeem as fast as possible , you can only redeem items from 1st to 21st of the month , the items can only be used started from 22nd of the month until the end of the month",
+        "select_item_to_redeem": "Select Item to Redeem",
+        "choose_available_item": "-- Choose an available item --"
     },
     [Language.BM]: {
         "menu": "Menu",
@@ -228,7 +230,9 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "Sahkan pemberian {pts} mata kepada {user}?",
         "points_limit_msg": "anda hanya boleh menebus 200 mata barangan dalam bulan ini , sila cuba menebus bulan depan",
         "shop_closed_msg": "kedai mata kini ditutup , ia akan dibuka semula pada hari pertama setiap bulan",
-        "shop_open_warning": "kedai mata akan dibuka sehingga 21 haribulan sahaja , sila tebus secepat mungkin , anda hanya boleh menebus barangan dari 1 hingga 21 haribulan , barangan hanya boleh digunakan bermula dari 22 haribulan sehingga akhir bulan"
+        "shop_open_warning": "kedai mata akan dibuka sehingga 21 haribulan sahaja , sila tebus secepat mungkin , anda hanya boleh menebus barangan dari 1 hingga 21 haribulan , barangan hanya boleh digunakan bermula dari 22 haribulan sehingga akhir bulan",
+        "select_item_to_redeem": "Pilih Barang untuk Ditebus",
+        "choose_available_item": "-- Pilih barang yang tersedia --"
     },
     [Language.BC]: {
         "menu": "菜单",
@@ -342,7 +346,9 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "确认向 {user} 发放 {pts} 积分吗？",
         "points_limit_msg": "您本月只能兑换总值200积分的物品，请下个月再试",
         "shop_closed_msg": "积分商店目前已关闭，将于每月1号重新开放",
-        "shop_open_warning": "积分商店仅开放至21号，请尽快兑换，您只能在每月1号至21号期间兑换物品，兑换的物品仅限在每月22号至月底期间使用"
+        "shop_open_warning": "积分商店仅开放至21号，请尽快兑换，您只能在每月1号至21号期间兑换物品，兑换的物品仅限在每月22号至月底期间使用",
+        "select_item_to_redeem": "选择要兑换的物品",
+        "choose_available_item": "-- 选择可用物品 --"
     },
     [Language.BI]: {
         "menu": "Menu",
@@ -456,6 +462,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "Tentu ka meri {pts} mata ngagai {user}?",
         "points_limit_msg": "nuan semina ulih nebus 200 mata barang dalam bulan tu , tulung uji nebus baru bulan dudi",
         "shop_closed_msg": "kedai mata benung ditutup diatu , iya deka dibuka baru ba hari keterubah ninting bulan",
-        "shop_open_warning": "kedai mata semina dibuka nyentuk 21 haribulan aja , tulung tebus jampat , nuan semina ulih nebus barang ari 1 nyentuk 21 haribulan , barang nya semina ulih dikena berengkah ari 22 haribulan nyentuk ujung bulan"
+        "shop_open_warning": "kedai mata semina dibuka nyentuk 21 haribulan aja , tulung tebus jampat , nuan semina ulih nebus barang ari 1 nyentuk 21 haribulan , barang nya semina ulih dikena berengkah ari 22 haribulan nyentuk ujung bulan",
+        "select_item_to_redeem": "Pilih Barang deka Ditebus",
+        "choose_available_item": "-- Pilih barang ti bisi --"
     }
 };
