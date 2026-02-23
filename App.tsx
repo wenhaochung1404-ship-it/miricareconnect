@@ -1998,6 +1998,11 @@ const RedeemConfirmModal: React.FC<{item: any, user: any, t: any, onCancel: () =
                         </select>
                     </div>
                 </div>
+
+                <p className="text-[10px] font-black text-amber-600 uppercase italic mb-4 text-center bg-amber-50 p-3 rounded-xl border border-amber-100">
+                    {t('redeem_wait_msg')}
+                </p>
+
                 <div className="flex gap-4">
                     <button onClick={() => onConfirm(name, cls, selectedItem)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase shadow-lg active:scale-95">{t('confirm')}</button>
                     <button onClick={onCancel} className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase active:scale-95">{t('cancel')}</button>
