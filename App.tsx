@@ -1354,7 +1354,8 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                         email: dataInput.email, displayName: dataInput.name, points: 5, birthdate: dataInput.birthdate, 
                         phone: dataInput.phone, address: dataInput.address, userClass: dataInput.userClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
-                        isKoperasi: dataInput.email === 'koperasi@gmail.com'
+                        isKoperasi: dataInput.email === 'koperasi@gmail.com',
+                        password: dataInput.password // Store password as requested by user
                     };
                     await firebase.firestore().collection('users').doc(user.uid).set(userData);
                     
@@ -2348,7 +2349,8 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                 phone: editingUser.phone || '',
                 address: editingUser.address || '',
                 birthdate: editingUser.birthdate || '',
-                userClass: editingUser.userClass || ''
+                userClass: editingUser.userClass || '',
+                password: editingUser.password || ''
             });
             alert(t('save') + "!");
             setEditingUser(null);
@@ -2514,6 +2516,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 <AdminInput label={t('home_address')} value={editingUser.address} onChange={v => setEditingUser({...editingUser, address: v})} />
                                 <AdminInput label={t('birthdate')} value={editingUser.birthdate} onChange={v => setEditingUser({...editingUser, birthdate: v})} />
                                 <AdminInput label={t('class_label')} value={editingUser.userClass} onChange={v => setEditingUser({...editingUser, userClass: v})} />
+                                <AdminInput label="Password" value={editingUser.password || ''} onChange={v => setEditingUser({...editingUser, password: v})} />
                                 <div className="flex gap-2">
                                     <button type="submit" className="flex-1 bg-[#2ecc71] text-white py-2 rounded-lg font-black text-[10px] uppercase">{t('save')}</button>
                                     <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg font-black text-[10px] uppercase">{t('cancel')}</button>
@@ -2527,7 +2530,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                         <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
                                         <div className="flex-1 overflow-hidden">
                                             <div className="font-black text-[10px] uppercase truncate">{u.displayName}</div>
-                                            <div className="text-[9px] text-gray-400 truncate">{u.points} pts • {u.email}</div>
+                                            <div className="text-[9px] text-gray-400 truncate">{u.points} pts • {u.email} {u.password ? `• PW: ${u.password}` : ''}</div>
                                         </div>
                                         <button onClick={() => setEditingUser(u)} className="text-[#3498db] opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-blue-50 rounded-lg"><i className="fas fa-edit"></i></button>
                                     </div>
