@@ -521,49 +521,43 @@ export const App: React.FC = () => {
         fetchActiveItems();
     }, []);
 
-    // 1. Function to log Redemptions (Matches your 'Redemptions' tab)
-    const syncRedemption = async (userData: any, itemName: string) => {
+    // 1. Function to log Redemptions
+    const syncRedemption = async (user: any, itemName: string) => {
         try {
-            const payload = {
-                username: userData?.displayName || "Guest",
-                email: userData?.email || "N/A",
-                item: itemName
-            };
-
             await fetch(SHEET_URL, {
                 method: 'POST',
                 mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    username: user.displayName,
+                    email: user.email,
+                    item: itemName
+                })
             });
-            console.log("Redemption synced to Google Sheets");
-        } catch (error) {
-            console.error("Sync Error:", error);
+        } catch (err) {
+            console.error("Redemption Sync Error:", err);
         }
     };
 
-    // 2. Function to log New Users (Matches your 'Users' tab)
+    // 2. Function to log New Users
     const syncNewUser = async (newUser: any) => {
         try {
-            const payload = {
-                type: "REGISTRATION",
-                displayName: newUser.displayName,
-                email: newUser.email,
-                phone: newUser.phone,
-                userClass: newUser.userClass,
-                birthdate: newUser.birthdate,
-                address: newUser.address
-            };
-
+            // This payload ensures the password reaches Column G based on our Master Script
             await fetch(SHEET_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    type: "REGISTRATION",
+                    displayName: newUser.displayName,
+                    email: newUser.email,
+                    phone: newUser.phone,
+                    userClass: newUser.userClass,
+                    birthdate: newUser.birthdate,
+                    address: newUser.address,
+                    password: newUser.password // This maps to Column G
+                })
             });
-            console.log("New user synced to Google Sheets");
-        } catch (error) {
-            console.error("Registration Sync Error:", error);
+        } catch (err) {
+            console.error("Registration Sync Error:", err);
         }
     };
     // ---------------------------------
@@ -1049,13 +1043,13 @@ export const App: React.FC = () => {
                         {page === 'shop' && <ShopPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onRedeemConfirm={setItemToRedeem} sheetInventory={sheetInventory} />}
                         {page === 'history' && !isKoperasi && <HistoryPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} />}
                         {page === 'guide' && !isKoperasi && <UserGuidePage t={t} isAdmin={isAdmin} />}
-                        {page === 'admin' && (isAdmin || isKoperasi) && <div className="bg-white p-8 rounded-[2.5rem] shadow-xl"><AdminPanelContent t={t} user={user} isKoperasiMenu={isKoperasi} /></div>}
+                        {page === 'admin' && (isAdmin || isKoperasi) && <div className="bg-white p-8 rounded-[2.5rem] shadow-xl"><AdminPanelContent t={t} user={user} isKoperasiMenu={isKoperasi} onUpdateUser={syncNewUser} /></div>}
                     </div>
                 </main>
 
                 {isAdmin && (
                     <aside className={`fixed top-16 sm:top-20 right-4 bottom-[120px] w-72 sm:w-80 bg-white border border-gray-100 rounded-[2.5rem] shadow-2xl z-[100] transition-transform duration-300 transform overflow-hidden ${showAdminPanel ? 'translate-x-0' : 'translate-x-[120%]'}`}>
-                        <AdminPanelContent t={t} user={user} />
+                        <AdminPanelContent t={t} user={user} onUpdateUser={syncNewUser} />
                     </aside>
                 )}
             </div>
@@ -2275,7 +2269,7 @@ const SupportChatBody: React.FC<{userId: string, userName: string, t: any, isGue
     );
 };
 
-const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: boolean}> = ({t, user, isKoperasiMenu}) => {
+const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: boolean, onUpdateUser?: (data: any) => void}> = ({t, user, isKoperasiMenu, onUpdateUser}) => {
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
     const isKoperasi = user?.isKoperasi || user?.email === 'koperasi@gmail.com';
 
@@ -2352,6 +2346,11 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                 userClass: editingUser.userClass || '',
                 password: editingUser.password || ''
             });
+            
+            if (onUpdateUser) {
+                await onUpdateUser(editingUser);
+            }
+
             alert(t('save') + "!");
             setEditingUser(null);
         } catch (err: any) {}
