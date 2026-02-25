@@ -1673,31 +1673,6 @@ const ShopPage: React.FC<{user: any, t: any, onAuth: () => void, onRedeemConfirm
                 )}
             </div>
 
-            {/* Google Sheets Inventory Dropdown */}
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm space-y-4">
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Select Item to Redeem (Live Inventory)</label>
-                    <select 
-                        className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-[#3498db] transition-all"
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            if (val) {
-                                // We wrap the string in an object to match the expected 'item' structure
-                                onRedeemConfirm({ name: val, cost: 0, color: '#3498db' });
-                            }
-                        }}
-                        value=""
-                    >
-                        <option value="">-- Choose an available item --</option>
-                        {sheetInventory.map((item, index) => (
-                            <option key={index} value={item}>
-                                {item}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
             {isShopOpen && (
                 <div className="lg:hidden bg-blue-50 border border-blue-100 p-5 rounded-3xl mb-4">
                     <p className="text-[10px] font-bold text-blue-600 leading-relaxed uppercase">
