@@ -2543,39 +2543,44 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                     selectedOffer ? (
                         <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 space-y-5 animate-in slide-in-from-right-2 relative">
                             {showDeclineModal && (
-                                <div className="absolute inset-0 z-50 bg-white/95 rounded-3xl p-6 flex flex-col justify-center animate-in fade-in">
-                                    <h4 className="text-[10px] font-black uppercase text-red-500 mb-4 tracking-widest">Reason for declining</h4>
-                                    <textarea 
-                                        value={declineReason} 
-                                        onChange={e => setDeclineReason(e.target.value)} 
-                                        className="flex-1 p-3 bg-gray-50 border-2 rounded-2xl outline-none text-xs font-bold mb-4"
-                                        placeholder="Type here..."
-                                    />
-                                    <div className="flex gap-2">
-                                        <button onClick={() => declineOffer(selectedOffer)} className="flex-1 bg-red-50 text-white py-3 rounded-xl font-black uppercase text-[9px]">Confirm Decline</button>
-                                        <button onClick={() => setShowDeclineModal(false)} className="bg-gray-200 px-4 py-3 rounded-xl font-black uppercase text-[9px]">Cancel</button>
+                                <div className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+                                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
+                                        <h4 className="text-[10px] font-black uppercase text-red-500 mb-4 tracking-widest">Reason for declining</h4>
+                                        <textarea 
+                                            value={declineReason} 
+                                            onChange={e => setDeclineReason(e.target.value)} 
+                                            className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none text-xs font-bold mb-4 focus:border-red-200 transition-all"
+                                            placeholder="Type here..."
+                                            rows={4}
+                                        />
+                                        <div className="flex gap-2">
+                                            <button onClick={() => declineOffer(selectedOffer)} className="flex-1 bg-red-500 text-white py-3 rounded-xl font-black uppercase text-[9px] shadow-lg active:scale-95 transition-all">Confirm Decline</button>
+                                            <button onClick={() => setShowDeclineModal(false)} className="bg-gray-100 text-gray-500 px-4 py-3 rounded-xl font-black uppercase text-[9px]">Cancel</button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
 
                             {isAwardingMode && (
-                                <div className="absolute inset-0 z-[60] bg-white/98 rounded-3xl p-8 flex flex-col justify-center animate-in zoom-in duration-200">
-                                    <h3 className="text-xl font-black uppercase italic text-[#2c3e50] mb-2">{t('points_award_input')}</h3>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-6">{selectedOffer.donorName} • {selectedOffer.itemName}</p>
-                                    <AdminInput 
-                                        label="Points Amount" 
-                                        type="number" 
-                                        value={awardingPoints} 
-                                        onChange={setAwardingPoints} 
-                                        placeholder="Enter points..."
-                                    />
-                                    <div className="flex gap-3 pt-6">
-                                        <button onClick={() => approveOffer(selectedOffer)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
-                                            {t('confirm')}
-                                        </button>
-                                        <button onClick={() => setIsAwardingMode(false)} className="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl font-black uppercase text-xs">
-                                            {t('cancel')}
-                                        </button>
+                                <div className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+                                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
+                                        <h3 className="text-xl font-black uppercase italic text-[#2c3e50] mb-2">{t('points_award_input')}</h3>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-6">{selectedOffer.donorName} • {selectedOffer.itemName}</p>
+                                        <AdminInput 
+                                            label="Points Amount" 
+                                            type="number" 
+                                            value={awardingPoints} 
+                                            onChange={setAwardingPoints} 
+                                            placeholder="Enter points..."
+                                        />
+                                        <div className="flex gap-3 pt-6">
+                                            <button onClick={() => approveOffer(selectedOffer)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
+                                                {t('confirm')}
+                                            </button>
+                                            <button onClick={() => setIsAwardingMode(false)} className="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl font-black uppercase text-xs">
+                                                {t('cancel')}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
