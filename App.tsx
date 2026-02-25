@@ -2529,7 +2529,17 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                             rows={4}
                                         />
                                         <div className="flex gap-2">
-                                            <button onClick={() => declineOffer(selectedOffer)} className="flex-1 bg-red-500 text-white py-3 rounded-xl font-black uppercase text-[9px] shadow-lg active:scale-95 transition-all">Confirm Decline</button>
+                                            <button 
+                                                disabled={declineReason.trim().length === 0}
+                                                onClick={() => declineOffer(selectedOffer)} 
+                                                className={`flex-1 py-3 rounded-xl font-black uppercase text-[9px] shadow-lg transition-all ${
+                                                    declineReason.trim().length === 0 
+                                                    ? 'bg-red-300 text-white/50 cursor-not-allowed blur-[1px] opacity-70' 
+                                                    : 'bg-red-500 text-white active:scale-95'
+                                                }`}
+                                            >
+                                                Confirm Decline
+                                            </button>
                                             <button onClick={() => setShowDeclineModal(false)} className="bg-gray-100 text-gray-500 px-4 py-3 rounded-xl font-black uppercase text-[9px]">Cancel</button>
                                         </div>
                                     </div>
