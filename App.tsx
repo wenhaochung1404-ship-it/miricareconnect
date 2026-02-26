@@ -331,6 +331,7 @@ const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
 
 export const App: React.FC = () => {
     const [lang, setLang] = useState<Language>(Language.EN);
+    const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [user, setUser] = useState<any | null>(null);
     const [page, setPage] = useState<string>('home');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -741,7 +742,79 @@ export const App: React.FC = () => {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#f8f9fa] font-sans" onClick={() => { setIsLangOpen(false); setIsQuickOfferOpen(false); }}>
+        <div className={`min-h-screen flex flex-col transition-colors duration-500 relative ${theme === 'dark' ? 'bg-[#050b18] text-white' : 'bg-[#f8f9fa] text-gray-900'}`} onClick={() => { setIsLangOpen(false); setIsQuickOfferOpen(false); }}>
+            <style>{`
+                .galaxy-bg {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: -1;
+                    background: radial-gradient(circle at 50% 50%, #1b2735 0%, #090a0f 100%);
+                    display: ${theme === 'dark' ? 'block' : 'none'};
+                }
+                .stars-container {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    z-index: 0;
+                }
+                .star {
+                    position: absolute;
+                    background: white;
+                    border-radius: 50%;
+                    opacity: 0.5;
+                }
+                ${theme === 'dark' ? `
+                    header { background: rgba(13, 25, 48, 0.9) !important; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1) !important; }
+                    .bg-white { background: rgba(255, 255, 255, 0.05) !important; color: white !important; }
+                    
+                    /* Force white text on almost everything in dark mode */
+                    .min-h-screen, .min-h-screen div, .min-h-screen p, .min-h-screen span, .min-h-screen h1, .min-h-screen h2, .min-h-screen h3, .min-h-screen h4, .min-h-screen h5, .min-h-screen h6, .min-h-screen label {
+                        color: #f8f9fa !important;
+                    }
+
+                    /* Ensure buttons and specific colored areas keep their text color */
+                    .bg-[#3498db], .bg-[#3498db] *, .bg-[#2ecc71], .bg-[#2ecc71] *, .text-white, button, button * {
+                        color: white !important;
+                    }
+
+                    .text-[#2c3e50], .text-black, .text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600 { color: #f8f9fa !important; }
+                    .text-gray-500 { color: #adb5bd !important; }
+                    .text-gray-400 { color: #6c757d !important; }
+                    .bg-gray-50, .bg-[#f8f9fa] { background: transparent !important; }
+                    .border-gray-100, .border-gray-200 { border-color: rgba(255,255,255,0.1) !important; }
+                    input, textarea, select { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.2) !important; color: white !important; }
+                    .bg-blue-50 { background: rgba(52, 152, 219, 0.1) !important; }
+                    .theme-card { background: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; }
+                    .shadow-xl, .shadow-2xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important; }
+                ` : ''}
+            `}</style>
+            
+            {theme === 'dark' && (
+                <div className="galaxy-bg">
+                    <div className="stars-container">
+                        {[...Array(50)].map((_, i) => (
+                            <div 
+                                key={i} 
+                                className="star animate-pulse" 
+                                style={{
+                                    top: `${Math.random() * 100}%`,
+                                    left: `${Math.random() * 100}%`,
+                                    width: `${1 + Math.random() * 2}px`,
+                                    height: `${1 + Math.random() * 2}px`,
+                                    animationDelay: `${Math.random() * 5}s`,
+                                    animationDuration: `${2 + Math.random() * 3}s`
+                                }}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
             <header className="bg-[#2c3e50] text-white shadow-xl sticky top-0 z-[100] h-16 sm:h-20 flex items-center">
                 <div className="container mx-auto px-2 sm:px-4 flex items-center justify-between gap-1 overflow-hidden">
                     <button onClick={(e) => { e.stopPropagation(); setIsMenuOpen(true); }} className="p-2 hover:bg-white/10 rounded-xl transition-all flex-shrink-0">
@@ -847,29 +920,39 @@ export const App: React.FC = () => {
                             </button>
                         )}
 
-                        <div className="relative">
+                        <div className="relative flex items-center gap-3">
                             <button 
-                                onClick={(e) => { e.stopPropagation(); setIsLangOpen(!isLangOpen); }}
+                                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
                                 className="bg-white text-[#2c3e50] w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-gray-50"
+                                title={theme === 'light' ? 'Dark Mode' : 'Light Mode'}
                             >
-                                <i className="fas fa-language text-xl sm:text-2xl"></i>
+                                <i className={`fas fa-${theme === 'light' ? 'moon' : 'sun'} text-xl sm:text-2xl`}></i>
                             </button>
-                            {isLangOpen && (
-                                <div className="absolute bottom-full right-0 mb-3 bg-white shadow-2xl rounded-2xl border border-gray-100 overflow-hidden z-[210] min-w-[140px] animate-in slide-in-from-bottom-2">
-                                    {(Object.values(Language) as Language[]).map(l => (
-                                        <button 
-                                            key={l}
-                                            onClick={() => { setLang(l); setIsLangOpen(false); }}
-                                            className={`w-full px-5 py-3 text-left text-[10px] font-black uppercase transition-colors hover:bg-gray-50 ${lang === l ? 'text-[#3498db] bg-blue-50' : 'text-gray-500'}`}
-                                        >
-                                            {l === Language.EN && 'English'}
-                                            {l === Language.BM && 'Bahasa Melayu'}
-                                            {l === Language.BC && '中文'}
-                                            {l === Language.BI && 'Bahasa Iban'}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+
+                            <div className="relative">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setIsLangOpen(!isLangOpen); }}
+                                    className="bg-white text-[#2c3e50] w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-gray-50"
+                                >
+                                    <i className="fas fa-language text-xl sm:text-2xl"></i>
+                                </button>
+                                {isLangOpen && (
+                                    <div className="absolute bottom-full right-0 mb-3 bg-white shadow-2xl rounded-2xl border border-gray-100 overflow-hidden z-[210] min-w-[140px] animate-in slide-in-from-bottom-2">
+                                        {(Object.values(Language) as Language[]).map(l => (
+                                            <button 
+                                                key={l}
+                                                onClick={() => { setLang(l); setIsLangOpen(false); }}
+                                                className={`w-full px-5 py-3 text-left text-[10px] font-black uppercase transition-colors hover:bg-gray-50 ${lang === l ? 'text-[#3498db] bg-blue-50' : 'text-gray-500'}`}
+                                            >
+                                                {l === Language.EN && 'English'}
+                                                {l === Language.BM && 'Bahasa Melayu'}
+                                                {l === Language.BC && '中文'}
+                                                {l === Language.BI && 'Bahasa Iban'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {user && (
@@ -1186,12 +1269,12 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
-    const submit = async (dataInput: any, e: React.FormEvent) => {
+    const submit = async (dataInput: any, currentMode: 'login' | 'register', e: React.FormEvent) => {
         e.preventDefault();
         if (typeof firebase === 'undefined' || !firebase.auth) return;
         setLoading(true); setError(null);
         try {
-            if (mode === 'login') {
+            if (currentMode === 'login') {
                 const { user } = await firebase.auth().signInWithEmailAndPassword(dataInput.email, dataInput.password);
                 const isHardcodedAdmin = dataInput.email === 'admin@gmail.com';
                 const isKoperasi = dataInput.email === 'koperasi@gmail.com';
@@ -1202,7 +1285,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                     throw new Error("Verification email sent! Please check your moe email spam folder page.");
                 }
                 onClose();
-            } else if (mode === 'register') {
+            } else if (currentMode === 'register') {
                 if (!dataInput.email.toLowerCase().endsWith("@moe-dl.edu.my") && dataInput.email !== 'admin@gmail.com' && dataInput.email !== 'koperasi@gmail.com') {
                     throw new Error(t('moe_email_required'));
                 }
@@ -1215,13 +1298,10 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                         phone: dataInput.phone, address: dataInput.address, userClass: dataInput.userClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
-                        password: dataInput.password // Store password as requested by user
+                        password: dataInput.password 
                     };
                     await firebase.firestore().collection('users').doc(user.uid).set(userData);
-                    
-                    // Sync to Google Sheets
                     await onRegisterSuccess(userData);
-
                     await firebase.auth().signOut();
                     alert("Verification message sent, please check your moe email spam folder page");
                     setMode('login');
@@ -1231,37 +1311,160 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 z-[400] flex items-center justify-center p-4 backdrop-blur-md" onClick={onClose}>
-            <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative animate-in zoom-in overflow-y-auto max-h-[95vh]" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-6 right-6 bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center transition-all"><i className="fas fa-times text-gray-400"></i></button>
-                <h2 className="text-2xl font-black text-center uppercase italic text-[#2c3e50] mb-8">
-                    {mode === 'login' ? t('login') : t('register')}
-                </h2>
-                {error && <div className="mb-6 bg-amber-50 p-4 rounded-xl text-amber-800 text-[11px] font-black uppercase tracking-wider border-2 border-amber-200">{error}</div>}
-                <form onSubmit={(e) => submit(data, e)} className="space-y-4">
-                    {mode === 'register' && (
-                        <>
-                            <input placeholder={t('full_name')} value={data.name} onChange={e => setData({...data, name: e.target.value})} className="w-full bg-gray-50 border-2 p-4 rounded-2xl outline-none font-bold text-sm" required />
-                            <input placeholder={t('class_label')} value={data.userClass} onChange={e => setData({...data, userClass: e.target.value})} className="w-full bg-gray-50 border-2 p-4 rounded-2xl outline-none font-bold text-sm" required />
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Date of Birth</label>
-                                <input type="date" value={data.birthdate} onChange={e => setData({...data, birthdate: e.target.value})} className="w-full bg-gray-50 border-2 p-4 rounded-2xl outline-none font-bold text-sm" required />
-                            </div>
-                            <input type="tel" placeholder={t('phone_number')} value={data.phone} onChange={e => setData({...data, phone: e.target.value})} className="w-full bg-gray-50 border-2 p-4 rounded-2xl outline-none font-bold text-sm" required />
-                            <input placeholder={t('home_address')} value={data.address} onChange={e => setData({...data, address: e.target.value})} className="w-full bg-gray-50 border-2 p-4 rounded-2xl outline-none font-bold text-sm" required />
-                        </>
-                    )}
-                    <input type="email" placeholder="m-xxxxxxxx@moe-dl.edu.my" value={data.email} onChange={e => setData({...data, email: e.target.value})} className="w-full bg-gray-50 border-2 p-4 rounded-2xl outline-none font-bold text-sm placeholder:text-gray-300" required />
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 overflow-y-auto backdrop-blur-sm bg-black/40" onClick={onClose}>
+            <style>{`
+                .auth-modal-card {
+                    width: 100%;
+                    max-width: 450px;
+                    background: white;
+                    border-radius: 2.5rem;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+                    overflow: hidden;
+                    border: 4px solid #3498db;
+                    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .auth-tab-btn {
+                    flex: 1;
+                    padding: 1.25rem;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    font-style: italic;
+                    font-size: 0.75rem;
+                    letter-spacing: 0.1em;
+                    transition: all 0.3s ease;
+                }
+                .auth-tab-btn.active {
+                    background: #3498db;
+                    color: white;
+                }
+                .auth-tab-btn:not(.active) {
+                    background: #f8f9fa;
+                    color: #3498db;
+                }
+                .auth-tab-btn:not(.active):hover {
+                    background: #ebf5fb;
+                }
+                .bright-input {
+                    background: #f8f9fa;
+                    border: 2px solid #ebf5fb;
+                    color: #2c3e50;
+                    transition: all 0.3s ease;
+                }
+                .bright-input:focus {
+                    border-color: #3498db;
+                    background: white;
+                    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+                }
+            `}</style>
+
+            <div className="auth-modal-card relative z-10 animate-in zoom-in duration-300 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                {/* Header with Tabs - Fixed at top */}
+                <div className="relative border-b-4 border-[#3498db] bg-white z-30 shrink-0">
+                    <button onClick={onClose} className="absolute top-4 right-4 text-[#3498db] hover:rotate-90 transition-transform z-40">
+                        <i className="fas fa-times text-xl"></i>
+                    </button>
                     
-                    <div className="relative">
-                        <input type={showPassword ? "text" : "password"} placeholder={t('password')} value={data.password} onChange={e => setData({...data, password: e.target.value})} className="w-full bg-gray-50 border-2 p-4 rounded-2xl outline-none font-bold text-sm" required />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300"><i className={`fas fa-${showPassword ? 'eye-slash' : 'eye'}`}></i></button>
+                    <div className="flex">
+                        <button 
+                            onClick={() => { setMode('login'); setError(null); }}
+                            className={`auth-tab-btn ${mode === 'login' ? 'active' : ''}`}
+                        >
+                            <i className="fas fa-sign-in-alt mr-2"></i>
+                            {t('login')}
+                        </button>
+                        <button 
+                            onClick={() => { setMode('register'); setError(null); }}
+                            className={`auth-tab-btn ${mode === 'register' ? 'active' : ''}`}
+                        >
+                            <i className="fas fa-user-plus mr-2"></i>
+                            {t('register')}
+                        </button>
                     </div>
-                    
-                    <button disabled={loading} className="w-full bg-[#3498db] text-white py-6 rounded-full font-black text-xl shadow-xl hover:scale-105 transition-all mt-6 uppercase tracking-widest">{loading ? '...' : (mode === 'login' ? t('login') : t('register'))}</button>
-                </form>
-                <div className="mt-6 flex flex-col items-center gap-3">
-                    <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="text-xs font-black uppercase text-[#3498db] hover:underline">{mode === 'login' ? t('register') : t('login')}</button>
+                </div>
+
+                {/* Scrollable Content Area */}
+                <div className="p-8 overflow-y-auto custom-scrollbar">
+                    <div className="mb-8 text-center">
+                        <h2 className="text-2xl font-black uppercase italic text-[#2c3e50] tracking-tighter">
+                            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                        </h2>
+                        <p className="text-[10px] font-bold text-[#3498db] uppercase tracking-[0.3em] mt-1">
+                            {mode === 'login' ? 'Access your dashboard' : 'Join our community'}
+                        </p>
+                    </div>
+
+                    {error && (
+                        <div className="mb-6 bg-red-50 border-2 border-red-100 p-4 rounded-2xl text-red-500 text-[10px] font-black uppercase tracking-wider text-center">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={(e) => submit(data, mode, e)} className="space-y-4">
+                        {mode === 'register' && (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('full_name')}</label>
+                                        <input placeholder="Name" value={data.name} onChange={e => setData({...data, name: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('class_label')}</label>
+                                        <input placeholder="Class" value={data.userClass} onChange={e => setData({...data, userClass: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Birthdate</label>
+                                        <input type="date" value={data.birthdate} onChange={e => setData({...data, birthdate: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Phone</label>
+                                        <input type="tel" placeholder="Phone" value={data.phone} onChange={e => setData({...data, phone: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('home_address')}</label>
+                                    <input placeholder="Address" value={data.address} onChange={e => setData({...data, address: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                </div>
+                            </>
+                        )}
+
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">MOE Email</label>
+                            <input 
+                                type="email" 
+                                placeholder="m-xxxxxxxx@moe-dl.edu.my" 
+                                value={data.email} 
+                                onChange={e => setData({...data, email: e.target.value})} 
+                                className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" 
+                                required 
+                            />
+                        </div>
+                        
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('password')}</label>
+                            <div className="relative">
+                                <input 
+                                    type={showPassword ? "text" : "password"} 
+                                    placeholder="••••••••" 
+                                    value={data.password} 
+                                    onChange={e => setData({...data, password: e.target.value})} 
+                                    className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" 
+                                    required 
+                                />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#3498db]">
+                                    <i className={`fas fa-${showPassword ? 'eye-slash' : 'eye'}`}></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            disabled={loading} 
+                            className="w-full bg-[#3498db] text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all mt-6 uppercase tracking-widest disabled:opacity-50"
+                        >
+                            {loading ? <i className="fas fa-spinner fa-spin"></i> : (mode === 'login' ? t('login') : t('register'))}
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
