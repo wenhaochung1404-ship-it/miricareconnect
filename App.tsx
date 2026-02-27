@@ -90,10 +90,7 @@ const Logo: React.FC<{ className?: string, iconSize?: string, customUrl?: string
 };
 
 const MenuItem: React.FC<{icon: string, label: string, onClick: () => void, active?: boolean}> = ({icon, label, onClick, active}) => (
-    <button onClick={onClick} className={`flex items-center gap-3 sm:gap-5 p-3 sm:p-5 rounded-xl sm:rounded-2xl transition-all ${active ? 'bg-[#3498db] text-white shadow-xl scale-105' : 'text-gray-400 hover:bg-gray-50 hover:text-[#2c3e50]'}`}>
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-xl ${active ? 'bg-white/20' : 'bg-gray-100'}`}>
-            <i className={`fas fa-${icon} text-xs sm:text-sm`}></i>
-        </div>
+    <button onClick={onClick} className={`flex items-center gap-3 sm:gap-5 p-3 sm:p-5 rounded-xl sm:rounded-2xl transition-all menu-item-btn ${active ? 'bg-[#3498db] text-white shadow-xl scale-105' : 'text-gray-400 hover:bg-gray-50'}`}>
         <span className="font-black text-[10px] sm:text-xs uppercase tracking-widest text-left">{label}</span>
     </button>
 );
@@ -858,6 +855,40 @@ export const App: React.FC = () => {
                     .kindness-box .text-\[\#f39c12\] {
                         color: #f39c12 !important;
                     }
+
+                    /* Notification Modal Fixes */
+                    .fixed.inset-0.bg-black\/80 .bg-white {
+                        background: #0d1930 !important;
+                        border: 1px solid rgba(255,255,255,0.1) !important;
+                    }
+                    .fixed.inset-0.bg-black\/80 .bg-gray-50 {
+                        background: rgba(255,255,255,0.05) !important;
+                        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                    }
+                    .fixed.inset-0.bg-black\/80 .text-\[\#2c3e50\] {
+                        color: #f8f9fa !important;
+                    }
+                    .fixed.inset-0.bg-black\/80 .bg-gray-200 {
+                        background: rgba(255,255,255,0.1) !important;
+                        color: #f8f9fa !important;
+                    }
+                    .fixed.inset-0.bg-black\/80 .bg-blue-50\/50 {
+                        background: rgba(52, 152, 219, 0.1) !important;
+                        border-color: rgba(52, 152, 219, 0.2) !important;
+                    }
+                    .fixed.inset-0.bg-black\/80 .text-gray-800 {
+                        color: #f8f9fa !important;
+                    }
+                    .fixed.inset-0.bg-black\/80 .text-gray-500 {
+                        color: #adb5bd !important;
+                    }
+                    
+                    /* Admin Chat Log Window Fix */
+                    .bg-white.border.text-gray-800 {
+                        background: rgba(255,255,255,0.1) !important;
+                        border-color: rgba(255,255,255,0.1) !important;
+                        color: #f8f9fa !important;
+                    }
                     
                     /* History Page Specifics */
                     .bg-gray-100 { background: rgba(255,255,255,0.1) !important; }
@@ -872,7 +903,12 @@ export const App: React.FC = () => {
                     .bg-white.shadow-sm { background: rgba(255, 255, 255, 0.2) !important; }
                     
                     /* Menu Item Hover/Active */
-                    .hover\:bg-gray-50:hover { background: rgba(255,255,255,0.1) !important; }
+                    .menu-item-btn:hover { 
+                        background-color: rgba(52, 152, 219, 0.2) !important; 
+                    }
+                    .menu-item-btn:hover span {
+                        color: #ffffff !important;
+                    }
                     .bg-blue-50 { background: rgba(52, 152, 219, 0.2) !important; }
 
                     .bg-gray-50, .bg-[#f8f9fa], .bg-gray-100 { background: rgba(255,255,255,0.05) !important; }
@@ -1090,9 +1126,8 @@ export const App: React.FC = () => {
             <aside className={`fixed inset-y-0 left-0 w-[80vw] sm:w-80 z-[301] transform transition-transform duration-500 shadow-2xl flex flex-col ${theme === 'dark' ? 'bg-[#0d1930]' : 'bg-white'} ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-8 flex flex-col h-full overflow-y-auto scrollbar-hide" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-4 mb-12">
-                        <Logo customUrl={branding.logoUrl} className="w-10 h-10 rounded-xl shadow-md border-2 border-gray-50 flex-shrink-0" iconSize="text-sm" />
                         <h2 className="text-xl font-black italic text-[#2c3e50] uppercase tracking-tighter truncate pr-4">
-                            {user?.displayName || 'Guest'}
+                            {user?.displayName || t('guest')}
                         </h2>
                         <button onClick={() => setIsMenuOpen(false)} className="text-gray-400 hover:text-red-500 shrink-0 ml-auto">
                             <i className="fas fa-times text-2xl"></i>
@@ -1115,7 +1150,7 @@ export const App: React.FC = () => {
                             </>
                         ) : (
                             <>
-                                <MenuItem icon="user-shield" label="Koperasi Panel" onClick={() => { setPage('admin'); setIsMenuOpen(false); }} active={page === 'admin'} />
+                                <MenuItem icon="user-shield" label={t('koperasi_panel')} onClick={() => { setPage('admin'); setIsMenuOpen(false); }} active={page === 'admin'} />
                                 <MenuItem icon="shopping-cart" label={t('points_shop')} onClick={() => { setPage('shop'); setIsMenuOpen(false); }} active={page === 'shop'} />
                             </>
                         )}
@@ -1149,7 +1184,7 @@ export const App: React.FC = () => {
                                         <i className={`fas fa-${uploading ? 'spinner fa-spin' : 'cloud-upload-alt'}`}></i>
                                     </div>
                                     <span className="text-xs font-black text-gray-400 uppercase tracking-widest text-center">
-                                        {uploading ? `Uploading... ${uploadProgress}%` : 'Pick Logo from Device'}
+                                        {uploading ? `${t('uploading')} ${uploadProgress}%` : t('pick_logo')}
                                     </span>
                                 </label>
                             </div>
@@ -1162,7 +1197,7 @@ export const App: React.FC = () => {
 
                             {branding.logoUrl && !uploading && (
                                 <div className="p-6 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200 flex flex-col items-center">
-                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-4">Active Website Logo</span>
+                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-4">{t('active_logo')}</span>
                                     <div className="w-24 h-24 rounded-2xl bg-white shadow-xl border-4 border-white overflow-hidden p-2">
                                         <Logo customUrl={branding.logoUrl} className="w-full h-full" />
                                     </div>
@@ -1170,7 +1205,7 @@ export const App: React.FC = () => {
                                         onClick={removeLogo}
                                         className="mt-4 text-[9px] font-black text-red-500 uppercase hover:underline"
                                     >
-                                        Remove Logo
+                                        {t('remove_logo')}
                                     </button>
                                 </div>
                             )}
@@ -1182,7 +1217,7 @@ export const App: React.FC = () => {
                                 disabled={uploading}
                                 className="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase hover:bg-gray-200 transition-colors disabled:opacity-50"
                             >
-                                Close
+                                {t('close')}
                             </button>
                         </div>
                     </div>
@@ -1215,7 +1250,7 @@ export const App: React.FC = () => {
                                                 </p>
                                                 <p className="text-[10px] text-gray-500 font-medium">{n.message}</p>
                                                 <div className="mt-2 text-[8px] font-black text-gray-400 uppercase">
-                                                  {n.createdAt?.toDate?.() ? n.createdAt.toDate().toLocaleString() : 'Recent'}
+                                                  {n.createdAt?.toDate?.() ? n.createdAt.toDate().toLocaleString() : t('recent')}
                                                 </div>
                                             </div>
                                         </div>
@@ -1685,7 +1720,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                                 className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
                             />
                         ) : (
-                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.phone || 'Not Set'}</p>
+                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.phone || t('not_set')}</p>
                         )}
                     </div>
                     
@@ -1699,7 +1734,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                                 className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
                             />
                         ) : (
-                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.birthdate || 'Not Set'}</p>
+                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.birthdate || t('not_set')}</p>
                         )}
                     </div>
 
@@ -1712,7 +1747,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                                 className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db] min-h-[80px]"
                             />
                         ) : (
-                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.address || 'Not Set'}</p>
+                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.address || t('not_set')}</p>
                         )}
                     </div>
                 </div>
@@ -2257,7 +2292,7 @@ const QuickOfferModalContent: React.FC<{user: any, t: any, onComplete: () => voi
                 </div>
                 {item.category === 'category_food' && (
                     <div className="space-y-1 animate-in slide-in-from-top-2">
-                        <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-2">Expiry Date (Food Only - Min 1 Month)</label>
+                        <label className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-2">{t('expiry_date_food_warning')}</label>
                         <input 
                             type="date" 
                             value={item.expiryDate} 
@@ -2446,13 +2481,13 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             await db.collection('redeem_history').doc(redeem.id).update({ status: 'confirmed' });
             await db.collection('notifications').add({
                 userId: redeem.userId,
-                title: "Redeem Confirmed",
-                message: `Your redeem for ${redeem.itemName} has been confirmed. Code: ${redeem.rdCode || 'N/A'}`,
+                title: t('redeem_confirmed'),
+                message: t('redeem_confirmed_msg').replace('{item}', redeem.itemName).replace('{code}', redeem.rdCode || 'N/A'),
                 type: 'status',
                 read: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            alert("Redemption Accepted!");
+            alert(t('redemption_accepted'));
         } catch (e) {}
     };
 
@@ -2463,7 +2498,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
 
     const approveOffer = async (offer: any) => {
         if (awardingPoints < 0) {
-            alert("Please enter valid points.");
+            alert(t('points_award_input'));
             return;
         }
 
@@ -2501,13 +2536,13 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             setAwardingPoints(0);
             setSelectedOffer(null);
         } catch (err: any) {
-            alert("Approval failed.");
+            alert(t('approval_failed'));
         }
     };
 
     const declineOffer = async (offer: any) => {
         if (!declineReason.trim()) {
-            alert("Please provide a reason.");
+            alert(t('decline_reason_label'));
             return;
         }
         if (typeof firebase === 'undefined' || !firebase.firestore) return;
@@ -2515,14 +2550,14 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
         try {
             await db.collection('notifications').add({
                 userId: offer.userId,
-                title: "Offer Declined",
-                message: `Your offer for ${offer.itemName} was declined. Reason: ${declineReason}`,
+                title: t('offer_declined'),
+                message: t('offer_declined_msg').replace('{item}', offer.itemName).replace('{reason}', declineReason),
                 type: 'message',
                 read: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             await db.collection('donations').doc(offer.id).delete();
-            alert("Offer Declined and removed.");
+            alert(t('offer_declined_removed'));
             setShowDeclineModal(false);
             setDeclineReason('');
             setSelectedOffer(null);
@@ -2534,18 +2569,18 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
         if (typeof firebase === 'undefined' || !firebase.firestore) return;
         try {
             await firebase.firestore().collection('counters').doc('redemptions').set({ count: 0 });
-            alert("Redemption counter reset to RD0000. Next code will be RD0001.");
+            alert(t('counter_reset_success'));
         } catch (e) {
-            alert("Failed to reset counter.");
+            alert(t('counter_reset_failed'));
         }
     };
 
     return (
         <div className={`h-full flex flex-col ${isKoperasiMenu ? '' : 'p-4 sm:p-6'} overflow-hidden bg-white`}>
             <div className="flex justify-between items-start mb-4 shrink-0">
-                <h2 className="text-xl font-black italic uppercase text-[#2c3e50] border-b-4 border-[#3498db] pb-2 inline-block">{isAdmin ? t('admin_panel') : 'Koperasi Panel'}</h2>
+                <h2 className="text-xl font-black italic uppercase text-[#2c3e50] border-b-4 border-[#3498db] pb-2 inline-block">{isAdmin ? t('admin_panel') : t('koperasi_panel')}</h2>
                 {isAdmin && activeTab === 'vouchers' && (
-                    <button onClick={handleResetRD} className="text-[8px] font-black uppercase bg-red-100 text-red-500 px-2 py-1 rounded-md hover:bg-red-200 transition-colors">Reset Codes</button>
+                    <button onClick={handleResetRD} className="text-[8px] font-black uppercase bg-red-100 text-red-500 px-2 py-1 rounded-md hover:bg-red-200 transition-colors">{t('reset_codes')}</button>
                 )}
             </div>
             <div className="flex flex-wrap gap-1 mb-4 shrink-0">
@@ -2562,7 +2597,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                 {activeTab === 'users' && isAdmin && (
                     <div className="space-y-4">
                         <div className="bg-[#2c3e50] text-white p-4 rounded-2xl shadow-inner flex justify-between items-center">
-                            <span className="text-[10px] font-black uppercase tracking-widest">Total Citizens</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">{t('total_citizens')}</span>
                             <span className="text-xl font-black text-[#f39c12]">{data.users.length}</span>
                         </div>
                         {editingUser ? (
@@ -2573,7 +2608,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 <AdminInput label={t('home_address')} value={editingUser.address} onChange={v => setEditingUser({...editingUser, address: v})} />
                                 <AdminInput label={t('birthdate')} value={editingUser.birthdate} onChange={v => setEditingUser({...editingUser, birthdate: v})} />
                                 <AdminInput label={t('class_label')} value={editingUser.userClass} onChange={v => setEditingUser({...editingUser, userClass: v})} />
-                                <AdminInput label="Password" value={editingUser.password || ''} onChange={v => setEditingUser({...editingUser, password: v})} />
+                                <AdminInput label={t('password_label')} value={editingUser.password || ''} onChange={v => setEditingUser({...editingUser, password: v})} />
                                 <div className="flex gap-2">
                                     <button type="submit" className="flex-1 bg-[#2ecc71] text-white py-2 rounded-lg font-black text-[10px] uppercase">{t('save')}</button>
                                     <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg font-black text-[10px] uppercase">{t('cancel')}</button>
@@ -2603,12 +2638,12 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                             {showDeclineModal && (
                                 <div className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
                                     <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
-                                        <h4 className="text-[10px] font-black uppercase text-red-500 mb-4 tracking-widest">Reason for declining</h4>
+                                        <h4 className="text-[10px] font-black uppercase text-red-500 mb-4 tracking-widest">{t('decline_reason_label')}</h4>
                                         <textarea 
                                             value={declineReason} 
                                             onChange={e => setDeclineReason(e.target.value)} 
                                             className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none text-xs font-bold mb-4 focus:border-red-200 transition-all"
-                                            placeholder="Type here..."
+                                            placeholder={t('type_here_placeholder')}
                                             rows={4}
                                         />
                                         <div className="flex gap-2">
@@ -2621,9 +2656,9 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                                     : 'bg-red-500 text-white active:scale-95'
                                                 }`}
                                             >
-                                                Confirm Decline
+                                                {t('confirm_decline')}
                                             </button>
-                                            <button onClick={() => setShowDeclineModal(false)} className="bg-gray-100 text-gray-500 px-4 py-3 rounded-xl font-black uppercase text-[9px]">Cancel</button>
+                                            <button onClick={() => setShowDeclineModal(false)} className="bg-gray-100 text-gray-500 px-4 py-3 rounded-xl font-black uppercase text-[9px]">{t('cancel')}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -2635,11 +2670,11 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                         <h3 className="text-xl font-black uppercase italic text-[#2c3e50] mb-2">{t('points_award_input')}</h3>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase mb-6">{selectedOffer.donorName} • {selectedOffer.itemName}</p>
                                         <AdminInput 
-                                            label="Points Amount" 
+                                            label={t('points_amount')} 
                                             type="number" 
                                             value={awardingPoints} 
                                             onChange={setAwardingPoints} 
-                                            placeholder="Enter points..."
+                                            placeholder={t('enter_points_placeholder')}
                                         />
                                         <div className="flex gap-3 pt-6">
                                             <button onClick={() => approveOffer(selectedOffer)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
@@ -2666,7 +2701,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                         </span>
                                     </div>
                                     {selectedOffer.expiryDate && (
-                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest">Expiry Date: {selectedOffer.expiryDate}</p>
+                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest">{t('expiry_date')}: {selectedOffer.expiryDate}</p>
                                     )}
                                 </div>
                                 <div className="space-y-4 pt-4 border-t border-gray-200">
@@ -2686,7 +2721,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                             <i className="fas fa-check-circle mr-2"></i> {t('confirm')}
                                         </button>
                                         <button onClick={() => setShowDeclineModal(true)} className="flex-1 bg-red-50 text-red-500 py-4 rounded-2xl font-black uppercase text-xs hover:bg-red-100 transition-colors active:scale-95 shadow-xl shadow-red-100">
-                                            <i className="fas fa-times-circle mr-2"></i> Decline
+                                            <i className="fas fa-times-circle mr-2"></i> {t('decline')}
                                         </button>
                                     </>
                                 )}
