@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Language, UserProfile } from './types';
 import { translations } from './translations';
+import { GoogleGenAI } from "@google/genai";
 
 declare const firebase: any;
 
@@ -177,10 +178,11 @@ const OffersPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
     );
 };
 
-const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
-    const [announcement, setAnnouncement] = useState<{text: string}>({text: ''});
+const HomePage: React.FC<{ t: any, user: any, lang: Language }> = ({ t, user, lang }) => {
+    const [announcement, setAnnouncement] = useState<{text: string, text_ms?: string, text_zh?: string, text_bi?: string}>({text: ''});
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
+    const [translating, setTranslating] = useState(false);
     
     const [guideContent, setGuideContent] = useState('');
     const [isEditingGuide, setIsEditingGuide] = useState(false);
@@ -214,11 +216,48 @@ const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
 
     const saveAnnouncement = async () => {
         if (typeof firebase === 'undefined' || !firebase.firestore) return;
-        await firebase.firestore().collection('settings').doc('announcement').set({
-            text: editValue,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        setIsEditing(false);
+        setTranslating(true);
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+            
+            const prompt = `Translate the following announcement into 3 languages: Bahasa Melayu, Chinese (Simplified), and Iban. 
+            Return the result as a JSON object with keys: ms, zh, bi. 
+            Text to translate: "${editValue}"`;
+
+            const response = await ai.models.generateContent({
+                model: "gemini-3-flash-preview",
+                contents: prompt,
+                config: { responseMimeType: "application/json" }
+            });
+
+            const translationsData = JSON.parse(response.text || '{}');
+
+            await firebase.firestore().collection('settings').doc('announcement').set({
+                text: editValue,
+                text_ms: translationsData.ms || editValue,
+                text_zh: translationsData.zh || editValue,
+                text_bi: translationsData.bi || editValue,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            setIsEditing(false);
+        } catch (e) {
+            console.error("Translation error:", e);
+            // Fallback to just saving the original text if translation fails
+            await firebase.firestore().collection('settings').doc('announcement').set({
+                text: editValue,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            setIsEditing(false);
+        } finally {
+            setTranslating(false);
+        }
+    };
+
+    const getAnnouncementText = () => {
+        if (lang === Language.BM) return announcement.text_ms || announcement.text || t('announcement_body');
+        if (lang === Language.BC) return announcement.text_zh || announcement.text || t('announcement_body');
+        if (lang === Language.BI) return announcement.text_bi || announcement.text || t('announcement_body');
+        return announcement.text || t('announcement_body');
     };
 
     const saveGuide = async () => {
@@ -250,13 +289,13 @@ const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
 
             <div className="space-y-4 px-2">
                 <div className="flex justify-between items-end">
-                    <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">ANNOUNCEMENTS</h3>
+                    <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">{t('announcements')}</h3>
                     {isAdmin && (
                         <button 
                             onClick={() => isEditing ? saveAnnouncement() : setIsEditing(true)}
                             className="text-[10px] font-black uppercase text-[#3498db] tracking-widest hover:underline px-2"
                         >
-                            {isEditing ? 'PUBLISH' : 'UPDATE'}
+                            {isEditing ? t('publish') : t('update')}
                         </button>
                     )}
                 </div>
@@ -271,8 +310,11 @@ const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                 placeholder="Type announcement here..."
                             />
                             <div className="flex gap-4">
-                                <button onClick={() => setIsEditing(false)} className="text-[10px] font-black uppercase text-gray-400">CANCEL</button>
-                                <button onClick={saveAnnouncement} className="text-[10px] font-black uppercase text-[#3498db]">PUBLISH</button>
+                                <button onClick={() => setIsEditing(false)} className="text-[10px] font-black uppercase text-gray-400">{t('cancel')}</button>
+                                <button onClick={saveAnnouncement} disabled={translating} className="text-[10px] font-black uppercase text-[#3498db] flex items-center gap-2">
+                                    {translating && <i className="fas fa-spinner fa-spin"></i>}
+                                    {t('publish')}
+                                </button>
                             </div>
                         </div>
                     ) : (
@@ -280,8 +322,11 @@ const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                             <div className="w-10 h-10 flex-shrink-0 bg-blue-50 rounded-full flex items-center justify-center text-[#3498db]">
                                 <i className="fas fa-bullhorn"></i>
                             </div>
-                            <div className="whitespace-pre-wrap font-bold text-[#2c3e50] text-sm leading-relaxed pt-1">
-                                {announcement.text || 'No announcements yet.'}
+                            <div className="flex-1">
+                                <h4 className="font-black text-[#2c3e50] uppercase italic mb-1">{t('announcement_title')}</h4>
+                                <div className="whitespace-pre-wrap font-bold text-[#2c3e50] text-sm leading-relaxed">
+                                    {getAnnouncementText()}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -296,7 +341,7 @@ const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                             onClick={() => isEditingGuide ? saveGuide() : setIsEditingGuide(true)}
                             className="text-[10px] font-black uppercase text-[#3498db] tracking-widest hover:underline px-2"
                         >
-                            {isEditingGuide ? 'PUBLISH' : 'UPDATE'}
+                            {isEditingGuide ? t('publish') : t('update')}
                         </button>
                     )}
                 </div>
@@ -314,13 +359,13 @@ const HomePage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                 placeholder="Type user guide here..."
                             />
                             <div className="flex gap-4">
-                                <button onClick={() => setIsEditingGuide(false)} className="text-[10px] font-black uppercase text-gray-400">CANCEL</button>
-                                <button onClick={saveGuide} className="text-[10px] font-black uppercase text-[#3498db]">PUBLISH</button>
+                                <button onClick={() => setIsEditingGuide(false)} className="text-[10px] font-black uppercase text-gray-400">{t('cancel')}</button>
+                                <button onClick={saveGuide} className="text-[10px] font-black uppercase text-[#3498db]">{t('publish')}</button>
                             </div>
                         </div>
                     ) : (
                         <div className="whitespace-pre-wrap font-bold text-[#2c3e50] text-sm leading-relaxed">
-                            {guideContent || 'No guide content yet.'}
+                            {guideContent || t('user_guide_default')}
                         </div>
                     )}
                 </div>
@@ -773,25 +818,73 @@ export const App: React.FC = () => {
                     header { background: rgba(13, 25, 48, 0.9) !important; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1) !important; }
                     .bg-white { background: rgba(255, 255, 255, 0.05) !important; color: white !important; }
                     
-                    /* Force white text on almost everything in dark mode */
-                    .min-h-screen, .min-h-screen div, .min-h-screen p, .min-h-screen span, .min-h-screen h1, .min-h-screen h2, .min-h-screen h3, .min-h-screen h4, .min-h-screen h5, .min-h-screen h6, .min-h-screen label {
+                    /* Global Force White Text in Dark Mode */
+                    *, *::before, *::after {
                         color: #f8f9fa !important;
                     }
 
-                    /* Ensure buttons and specific colored areas keep their text color */
-                    .bg-[#3498db], .bg-[#3498db] *, .bg-[#2ecc71], .bg-[#2ecc71] *, .text-white, button, button * {
+                    /* Exceptions for buttons and specific status colors */
+                    .bg-[#3498db] *, .bg-[#2ecc71] *, .bg-red-500 *, .bg-amber-500 *, .text-white, button, button * {
                         color: white !important;
                     }
+                    
+                    /* Keep specific status colors readable */
+                    .text-red-500, .text-red-500 * { color: #ff6b6b !important; }
+                    .text-green-500, .text-green-500 * { color: #51cf66 !important; }
+                    .text-amber-500, .text-amber-500 * { color: #fcc419 !important; }
+                    .text-blue-500, .text-blue-500 * { color: #339af0 !important; }
+                    
+                    /* Kindness Level Points - Force Orange */
+                    .text-\[\#f39c12\], .text-\[\#f39c12\] * { 
+                        color: #f39c12 !important; 
+                    }
 
-                    .text-[#2c3e50], .text-black, .text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600 { color: #f8f9fa !important; }
-                    .text-gray-500 { color: #adb5bd !important; }
-                    .text-gray-400 { color: #6c757d !important; }
-                    .bg-gray-50, .bg-[#f8f9fa] { background: transparent !important; }
+                    /* Announcement Title and other Dark Blue text - Force White */
+                    .text-\[\#2c3e50\], .text-\[\#2c3e50\] * {
+                        color: #f8f9fa !important;
+                    }
+
+                    /* Sidebar and Portals Backgrounds */
+                    aside { background-color: #0d1930 !important; }
+                    
+                    /* Kindness Level Box Specific Fix */
+                    .kindness-box { 
+                        background: rgba(255, 255, 255, 0.05) !important; 
+                        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    }
+                    .kindness-box * {
+                        color: #f8f9fa !important;
+                    }
+                    .kindness-box .text-\[\#f39c12\] {
+                        color: #f39c12 !important;
+                    }
+                    
+                    /* History Page Specifics */
+                    .bg-gray-100 { background: rgba(255,255,255,0.1) !important; }
+                    .bg-white { background: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255,255,255,0.1) !important; }
+                    
+                    /* Status Badges in Dark Mode */
+                    .bg-amber-100 { background: rgba(243, 156, 18, 0.2) !important; border: 1px solid rgba(243, 156, 18, 0.3) !important; }
+                    .bg-green-100 { background: rgba(46, 204, 113, 0.2) !important; border: 1px solid rgba(46, 204, 113, 0.3) !important; }
+                    .bg-blue-100 { background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.3) !important; }
+                    
+                    /* Active Tab in History */
+                    .bg-white.shadow-sm { background: rgba(255, 255, 255, 0.2) !important; }
+                    
+                    /* Menu Item Hover/Active */
+                    .hover\:bg-gray-50:hover { background: rgba(255,255,255,0.1) !important; }
+                    .bg-blue-50 { background: rgba(52, 152, 219, 0.2) !important; }
+
+                    .bg-gray-50, .bg-[#f8f9fa], .bg-gray-100 { background: rgba(255,255,255,0.05) !important; }
                     .border-gray-100, .border-gray-200 { border-color: rgba(255,255,255,0.1) !important; }
                     input, textarea, select { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.2) !important; color: white !important; }
-                    .bg-blue-50 { background: rgba(52, 152, 219, 0.1) !important; }
-                    .theme-card { background: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; }
-                    .shadow-xl, .shadow-2xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important; }
+                    .theme-card, .bg-white { background: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; }
+                    .shadow-xl, .shadow-2xl, .shadow-sm { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important; }
+                    
+                    /* Floating Buttons Outline Fix */
+                    .border-white { border-color: transparent !important; }
+                    .shadow-\[0_8px_32px_rgba\(52\,152\,219\,0\.3\)\] { box-shadow: none !important; }
+                    .shadow-2xl { box-shadow: none !important; }
                 ` : ''}
             `}</style>
             
@@ -967,7 +1060,7 @@ export const App: React.FC = () => {
                             ) : !isKoperasi && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); setShowSupportChat(!showSupportChat); }}
-                                    className="bg-[#3498db] text-white w-16 h-16 rounded-full shadow-[0_8px_32px_rgba(52,152,219,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white z-[201]"
+                                    className="bg-[#3498db] text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white z-[201] outline-none focus:outline-none"
                                 >
                                     <i className="fas fa-comment-dots text-3xl"></i>
                                 </button>
@@ -978,7 +1071,7 @@ export const App: React.FC = () => {
 
                 <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isAdmin && showAdminPanel ? 'lg:mr-80' : ''}`}>
                     <div className="container mx-auto px-4 py-8 max-w-6xl">
-                        {page === 'home' && !isKoperasi && <HomePage t={t} user={user} />}
+                        {page === 'home' && !isKoperasi && <HomePage t={t} user={user} lang={lang} />}
                         {page === 'gallery' && !isKoperasi && <OffersPage t={t} user={user} />}
                         {page === 'profile' && !isKoperasi && <ProfilePage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onNavigate={() => {}} />}
                         {page === 'shop' && <ShopPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onRedeemConfirm={setItemToRedeem} sheetInventory={sheetInventory} />}
@@ -994,7 +1087,7 @@ export const App: React.FC = () => {
                 )}
             </div>
 
-            <aside className={`fixed inset-y-0 left-0 w-[80vw] sm:w-80 bg-white z-[301] transform transition-transform duration-500 shadow-2xl flex flex-col ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`fixed inset-y-0 left-0 w-[80vw] sm:w-80 z-[301] transform transition-transform duration-500 shadow-2xl flex flex-col ${theme === 'dark' ? 'bg-[#0d1930]' : 'bg-white'} ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-8 flex flex-col h-full overflow-y-auto scrollbar-hide" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-4 mb-12">
                         <Logo customUrl={branding.logoUrl} className="w-10 h-10 rounded-xl shadow-md border-2 border-gray-50 flex-shrink-0" iconSize="text-sm" />
@@ -1006,7 +1099,7 @@ export const App: React.FC = () => {
                         </button>
                     </div>
                     {user && !isKoperasi && (
-                        <div className="mb-8 p-4 bg-gray-50 rounded-2xl shrink-0">
+                        <div className="mb-8 p-4 bg-gray-50 rounded-2xl shrink-0 kindness-box">
                             <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('kindness_level')}</div>
                             <div className="text-2xl font-black text-[#f39c12]">{user.points} <span className="text-xs">{t('points')}</span></div>
                         </div>
@@ -1134,7 +1227,7 @@ export const App: React.FC = () => {
                 </div>
             )}
 
-            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} t={t} lang={lang} onRegisterSuccess={syncNewUser} />}
+            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} t={t} lang={lang} onRegisterSuccess={syncNewUser} theme={theme} />}
             
             {isQuickOfferOpen && user && !isKoperasi && (
                 <div className="fixed inset-0 bg-black/80 z-[600] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setIsQuickOfferOpen(false)}>
@@ -1262,7 +1355,7 @@ export const App: React.FC = () => {
     );
 };
 
-const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegisterSuccess: (data: any) => void}> = ({onClose, t, lang, onRegisterSuccess}) => {
+const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegisterSuccess: (data: any) => void, theme: 'light' | 'dark'}> = ({onClose, t, lang, onRegisterSuccess, theme}) => {
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [data, setData] = useState({ email: '', password: '', name: '', birthdate: '', phone: '', address: '', userClass: '' });
     const [loading, setLoading] = useState(false);
@@ -1316,7 +1409,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 .auth-modal-card {
                     width: 100%;
                     max-width: 450px;
-                    background: white;
+                    background: ${theme === 'dark' ? 'radial-gradient(circle at 50% 50%, #1b2735 0%, #090a0f 100%)' : 'white'};
                     border-radius: 2.5rem;
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
                     overflow: hidden;
@@ -1332,39 +1425,33 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                     font-size: 0.75rem;
                     letter-spacing: 0.1em;
                     transition: all 0.3s ease;
+                    background: ${theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8f9fa'};
+                    color: ${theme === 'dark' ? '#f8f9fa' : '#3498db'};
                 }
                 .auth-tab-btn.active {
                     background: #3498db;
                     color: white;
                 }
-                .auth-tab-btn:not(.active) {
-                    background: #f8f9fa;
-                    color: #3498db;
-                }
                 .auth-tab-btn:not(.active):hover {
-                    background: #ebf5fb;
+                    background: ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#ebf5fb'};
                 }
                 .bright-input {
-                    background: #f8f9fa;
-                    border: 2px solid #ebf5fb;
-                    color: #2c3e50;
+                    background: ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#f8f9fa'};
+                    border: 2px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#ebf5fb'};
+                    color: ${theme === 'dark' ? 'white' : '#2c3e50'};
                     transition: all 0.3s ease;
                 }
                 .bright-input:focus {
                     border-color: #3498db;
-                    background: white;
+                    background: ${theme === 'dark' ? 'rgba(255,255,255,0.15)' : 'white'};
                     box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
                 }
             `}</style>
 
             <div className="auth-modal-card relative z-10 animate-in zoom-in duration-300 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
                 {/* Header with Tabs - Fixed at top */}
-                <div className="relative border-b-4 border-[#3498db] bg-white z-30 shrink-0">
-                    <button onClick={onClose} className="absolute top-4 right-4 text-[#3498db] hover:rotate-90 transition-transform z-40">
-                        <i className="fas fa-times text-xl"></i>
-                    </button>
-                    
-                    <div className="flex">
+                <div className={`relative border-b-4 border-[#3498db] z-30 shrink-0 ${theme === 'dark' ? 'bg-[#1b2735]' : 'bg-white'} flex items-center`}>
+                    <div className="flex flex-1">
                         <button 
                             onClick={() => { setMode('login'); setError(null); }}
                             className={`auth-tab-btn ${mode === 'login' ? 'active' : ''}`}
@@ -1380,6 +1467,13 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                             {t('register')}
                         </button>
                     </div>
+                    <button 
+                        onClick={onClose} 
+                        className="p-4 sm:p-5 text-[#3498db] hover:bg-red-500 hover:text-white transition-all border-l-2 border-[#3498db]/20 flex-shrink-0"
+                        title="Close"
+                    >
+                        <i className="fas fa-times text-xl"></i>
+                    </button>
                 </div>
 
                 {/* Scrollable Content Area */}
