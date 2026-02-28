@@ -690,6 +690,14 @@ export const App: React.FC = () => {
                                 const data = doc.data();
                                 setUser({ ...data, uid: authUser.uid });
                                 if (isKoperasi) setPage('admin');
+
+                                // Check if verified but secondCheck is empty
+                                if ((authUser.emailVerified || isHardcodedAdmin || isKoperasi) && (!data.secondCheck || data.secondCheck === '')) {
+                                    const updatedData = { ...data, secondCheck: '(verified)' };
+                                    await db.collection('users').doc(authUser.uid).update({ secondCheck: '(verified)' });
+                                    // Sync to Google Sheets
+                                    syncNewUser(updatedData);
+                                }
                             } else {
                                 const profile = { 
                                     uid: authUser.uid, 
@@ -916,7 +924,7 @@ export const App: React.FC = () => {
         try {
             if (firebase.auth().currentUser) {
                 await firebase.auth().currentUser.sendEmailVerification();
-                alert("Verification message sent, please check your moe email spam folder page");
+                alert(t('verification_sent_alert'));
             }
         } catch (e: any) {
             alert(e.message);
@@ -1249,8 +1257,9 @@ export const App: React.FC = () => {
 
             {!emailVerified && user && (
                 <div className="bg-amber-500 text-white p-2 text-center text-[10px] font-black uppercase tracking-widest animate-pulse">
-                    Please check your moe email spam folder page
+                    {t('check_spam_folder')}
                     <button onClick={resendVerification} className="ml-4 underline hover:text-black">{t('update')}</button>
+                    <button onClick={() => window.location.reload()} className="ml-4 underline hover:text-black">{t('i_have_verified')}</button>
                 </div>
             )}
 
@@ -1647,7 +1656,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 if (!user.emailVerified && !isHardcodedAdmin && !isKoperasi) {
                     await user.sendEmailVerification();
                     await firebase.auth().signOut();
-                    throw new Error("Verification email sent! Please check your moe email spam folder page.");
+                    throw new Error(t('verification_sent_alert'));
                 }
 
                 // Check and update secondCheck if verified
@@ -1664,7 +1673,9 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 onClose();
             } else if (currentMode === 'register') {
                 if (!dataInput.email.toLowerCase().endsWith("@moe-dl.edu.my") && dataInput.email !== 'admin@gmail.com' && dataInput.email !== 'koperasi@gmail.com') {
-                    throw new Error(t('moe_email_required'));
+                    const msg = t('moe_email_alert');
+                    alert(msg);
+                    throw new Error(msg);
                 }
                 const {user} = await firebase.auth().createUserWithEmailAndPassword(dataInput.email, dataInput.password);
                 
@@ -1681,9 +1692,9 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                     };
                     await firebase.firestore().collection('users').doc(user.uid).set(userData);
                     await onRegisterSuccess(userData);
-                    await firebase.auth().signOut();
-                    alert("Verification message sent, please check your moe email spam folder page");
-                    setMode('login');
+                    // Do not sign out, keep user logged in to redirect to home
+                    alert(t('verification_sent_alert'));
+                    onClose();
                 }
             }
         } catch (err: any) { setError(err.message); } finally { setLoading(false); }
@@ -2393,10 +2404,23 @@ const EmptyHistory: React.FC<{t: any}> = ({t}) => (
     </div>
 );
 
-const RedeemConfirmModal: React.FC<{item: any, user: any, t: any, onCancel: () => void, onConfirm: (name: string, cls: string, selectedItem: string) => void, sheetInventory: string[]}> = ({item, user, t, onCancel, onConfirm, sheetInventory}) => {
+const RedeemConfirmModal: React.FC<{item: any, user: any, t: any, onCancel: () => void, onConfirm: (name: string, cls: string, selectedItem: string) => Promise<void>, sheetInventory: string[]}> = ({item, user, t, onCancel, onConfirm, sheetInventory}) => {
     const [name, setName] = useState(user.displayName || '');
     const [cls, setCls] = useState(user.userClass || '');
     const [selectedItem, setSelectedItem] = useState(item?.name || '');
+    const [isRedeeming, setIsRedeeming] = useState(false);
+
+    const handleConfirm = async () => {
+        if (isRedeeming) return;
+        setIsRedeeming(true);
+        try {
+            await onConfirm(name, cls, selectedItem);
+            // onConfirm should close the modal or handle success, but we keep loading state just in case
+        } catch (e) {
+            setIsRedeeming(false);
+            // Error handling is likely done in onConfirm or parent
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/80 z-[700] flex items-center justify-center p-4 backdrop-blur-md">
@@ -2412,6 +2436,7 @@ const RedeemConfirmModal: React.FC<{item: any, user: any, t: any, onCancel: () =
                             className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl font-bold text-sm outline-none focus:border-[#3498db] transition-all"
                             onChange={(e) => setSelectedItem(e.target.value)}
                             value={selectedItem || ""}
+                            disabled={isRedeeming}
                         >
                             <option value="">{t('choose_available_item')}</option>
                             {sheetInventory.map((item, index) => (
@@ -2428,8 +2453,27 @@ const RedeemConfirmModal: React.FC<{item: any, user: any, t: any, onCancel: () =
                 </p>
 
                 <div className="flex gap-4">
-                    <button onClick={() => onConfirm(name, cls, selectedItem)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase shadow-lg active:scale-95">{t('confirm')}</button>
-                    <button onClick={onCancel} className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase active:scale-95">{t('cancel')}</button>
+                    <button 
+                        onClick={handleConfirm} 
+                        disabled={isRedeeming}
+                        className={`flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2 ${isRedeeming ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                        {isRedeeming ? (
+                            <>
+                                <i className="fas fa-spinner fa-spin"></i>
+                                {t('processing')}
+                            </>
+                        ) : (
+                            t('confirm')
+                        )}
+                    </button>
+                    <button 
+                        onClick={onCancel} 
+                        disabled={isRedeeming}
+                        className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase active:scale-95 disabled:opacity-50"
+                    >
+                        {t('cancel')}
+                    </button>
                 </div>
             </div>
         </div>
@@ -2886,8 +2930,8 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 <AdminInput label={t('birthdate')} value={editingUser.birthdate} onChange={v => setEditingUser({...editingUser, birthdate: v})} />
                                 <AdminInput label={t('class_label')} value={editingUser.userClass} onChange={v => setEditingUser({...editingUser, userClass: v})} />
                                 <AdminInput label={t('password_label')} value={editingUser.password || ''} onChange={v => setEditingUser({...editingUser, password: v})} />
-                                <AdminInput label="Status (Col H)" value={editingUser.status || ''} onChange={v => setEditingUser({...editingUser, status: v})} />
-                                <AdminInput label="2nd Check (Col I)" value={editingUser.secondCheck || ''} onChange={v => setEditingUser({...editingUser, secondCheck: v})} />
+                                <AdminInput label={t('status_col_h')} value={editingUser.status || ''} onChange={v => setEditingUser({...editingUser, status: v})} />
+                                <AdminInput label={t('second_check_col_i')} value={editingUser.secondCheck || ''} onChange={v => setEditingUser({...editingUser, secondCheck: v})} />
                                 <div className="flex gap-2">
                                     <button type="submit" className="flex-1 bg-[#2ecc71] text-white py-2 rounded-lg font-black text-[10px] uppercase">{t('save')}</button>
                                     <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg font-black text-[10px] uppercase">{t('cancel')}</button>

@@ -150,7 +150,14 @@ export const translations: Record<Language, Record<string, string>> = {
         "redeem_confirmed": "Redeem Confirmed",
         "redeem_confirmed_msg": "Your redeem for {item} has been confirmed. Code: {code}",
         "hide_identity": "Hide Identity (Blur Name & Class)",
-        "show_identity": "Show Identity"
+        "show_identity": "Show Identity",
+        "moe_email_alert": "(please fill in with email m-xxxxxxxx@moe-dl.edu.my)",
+        "check_spam_folder": "Please check your moe email spam folder page",
+        "i_have_verified": "I have verified",
+        "processing": "Processing...",
+        "status_col_h": "Status (Col H)",
+        "second_check_col_i": "2nd Check (Col I)",
+        "verification_sent_alert": "Verification message sent, please check your moe email spam folder page"
     },
     [Language.BM]: {
         "menu": "Menu",
@@ -300,7 +307,14 @@ export const translations: Record<Language, Record<string, string>> = {
         "redeem_confirmed": "Penebusan Disahkan",
         "redeem_confirmed_msg": "Penebusan anda untuk {item} telah disahkan. Kod: {code}",
         "hide_identity": "Sembunyikan Identiti (Kaburkan Nama & Kelas)",
-        "show_identity": "Tunjukkan Identiti"
+        "show_identity": "Tunjukkan Identiti",
+        "moe_email_alert": "(sila isi dengan emel m-xxxxxxxx@moe-dl.edu.my)",
+        "check_spam_folder": "Sila semak halaman folder spam emel moe anda",
+        "i_have_verified": "Saya telah mengesahkan",
+        "processing": "Sedang memproses...",
+        "status_col_h": "Status (Kol H)",
+        "second_check_col_i": "Semakan Ke-2 (Kol I)",
+        "verification_sent_alert": "Mesej pengesahan dihantar, sila semak halaman folder spam emel moe anda"
     },
     [Language.BC]: {
         "menu": "菜单",
@@ -450,7 +464,14 @@ export const translations: Record<Language, Record<string, string>> = {
         "redeem_confirmed": "兑换已确认",
         "redeem_confirmed_msg": "您兑换的 {item} 已确认。代码：{code}",
         "hide_identity": "隐藏身份（模糊姓名和班级）",
-        "show_identity": "显示身份"
+        "show_identity": "显示身份",
+        "moe_email_alert": "(请填写邮箱 m-xxxxxxxx@moe-dl.edu.my)",
+        "check_spam_folder": "请检查您的 moe 电子邮件垃圾邮件文件夹页面",
+        "i_have_verified": "我已验证",
+        "processing": "处理中...",
+        "status_col_h": "状态 (H列)",
+        "second_check_col_i": "第二次检查 (I列)",
+        "verification_sent_alert": "验证消息已发送，请检查您的 moe 电子邮件垃圾邮件文件夹页面"
     },
     [Language.BI]: {
         "menu": "Menu",
@@ -600,6 +621,13 @@ export const translations: Record<Language, Record<string, string>> = {
         "redeem_confirmed": "Tebus Udah Mujur",
         "redeem_confirmed_msg": "Tebus nuan ungkup {item} udah mujur. Kod: {code}",
         "hide_identity": "Lalai Identiti (Kabur Nama & Kelas)",
-        "show_identity": "Tunjuk Identiti"
+        "show_identity": "Tunjuk Identiti",
+        "moe_email_alert": "(tulung isi ngena emel m-xxxxxxxx@moe-dl.edu.my)",
+        "check_spam_folder": "Tulung periksa laman folder spam emel moe nuan",
+        "i_have_verified": "Aku udah nentu ka",
+        "processing": "Benung memproses...",
+        "status_col_h": "Status (Kol H)",
+        "second_check_col_i": "Periksa Ke-2 (Kol I)",
+        "verification_sent_alert": "Pesan pengesahan udah dikirim, tulung periksa laman folder spam emel moe nuan"
     }
 };
