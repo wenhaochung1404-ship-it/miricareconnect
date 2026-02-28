@@ -1505,7 +1505,7 @@ export const App: React.FC = () => {
                          <button onClick={() => setIsQuickOfferOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all z-10">
                             <i className="fas fa-times"></i>
                          </button>
-                         <QuickOfferModalContent user={user} t={t} onComplete={() => setIsQuickOfferOpen(false)} />
+                         <QuickOfferModalContent user={user} t={t} onComplete={() => { setIsQuickOfferOpen(false); setPage('gallery'); }} />
                     </div>
                 </div>
             )}
