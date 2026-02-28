@@ -2804,8 +2804,11 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
         <div className={`h-full flex flex-col ${isKoperasiMenu ? '' : 'p-4 sm:p-6'} overflow-hidden bg-white admin-panel-container`}>
             <div className="flex justify-between items-start mb-4 shrink-0">
                 <h2 className="text-xl font-black italic uppercase text-[#2c3e50] border-b-4 border-[#3498db] pb-2 inline-block">{isAdmin ? t('admin_panel') : t('koperasi_panel')}</h2>
-                {isAdmin && activeTab === 'vouchers' && (
-                    <button onClick={handleResetRD} className="text-[8px] font-black uppercase bg-red-100 text-red-500 px-2 py-1 rounded-md hover:bg-red-200 transition-colors">{t('reset_codes')}</button>
+                {isAdmin && (
+                    <button onClick={handleResetRD} className="text-[8px] font-black uppercase bg-red-100 text-red-500 px-2 py-1 rounded-md hover:bg-red-200 transition-colors shadow-sm">
+                        <i className="fas fa-sync-alt mr-1"></i>
+                        {t('reset_codes')}
+                    </button>
                 )}
             </div>
             <div className="flex flex-wrap gap-1 mb-4 shrink-0">
