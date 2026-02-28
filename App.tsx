@@ -127,7 +127,7 @@ const OffersPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
     }, []);
 
     return (
-        <div className="max-w-6xl mx-auto py-8 px-4 space-y-12 animate-in fade-in duration-500">
+        <div className="max-w-6xl mx-auto py-8 px-4 space-y-12 animate-in fade-in duration-500 offers-page-container">
             <div className="flex justify-between items-center border-b-4 border-[#2c3e50] pb-4">
                 <h1 className="text-4xl font-black italic uppercase text-[#2c3e50] tracking-tighter">
                     {t('offers')}
@@ -175,100 +175,290 @@ const OffersPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
     );
 };
 
-const HomePage: React.FC<{ t: any, user: any, lang: Language }> = ({ t, user, lang }) => {
-    const [announcement, setAnnouncement] = useState<{text: string, text_ms?: string, text_zh?: string, text_bi?: string}>({text: ''});
-    const [isEditing, setIsEditing] = useState(false);
-    const [editValue, setEditValue] = useState('');
-    const [translating, setTranslating] = useState(false);
-    
-    const [guideContent, setGuideContent] = useState('');
-    const [isEditingGuide, setIsEditingGuide] = useState(false);
-    const [loadingGuide, setLoadingGuide] = useState(true);
+const ANNOUNCEMENT_CONTENT = {
+    en: `Welcome to Miri Care Connect
+Hello everyone!
+Welcome to the official website of our Khidmat Masyarakat – Miri Care Connect.
 
+We are currently available at SMK Lutong. If you have items at home that are no longer in use but are still in good condition, you are welcome to donate them through our platform. All donated items will be distributed to communities in need.
+
+📍 Donation Venue:
+Bilik Pengawas, SMK Lutong
+(You may approach any prefect wearing a black coat, and they will guide you to the venue.)
+
+🕒 Donation Schedule:
+Monday / Tuesday / Friday
+6:15 AM – 6:40 AM
+
+Prefects will be on duty during these times to assist with the donation process.
+
+All donated items will be verified by the Prefects. Once an item is confirmed to be in good and usable condition, it will be approved in our system, and reward points will be credited to your account. The number of points is determined by the prefects.
+
+🎁 Reward Redemption:
+Accumulated points can be redeemed for vouchers at the School Cooperative (Koperasi). Please remember the code (RD-XXXX) that given by the system. Cooperative prefect (Pengawas Koperasi) will search for your name in the name list through the code. So, the code is VERY IMPORTANT.
+
+Thank you for supporting Miri Care Connect and helping us make a positive difference in our community 💙`,
+    ms: `Selamat Datang ke Miri Care Connect
+Helo semua!
+Selamat datang ke laman web rasmi Khidmat Masyarakat kami – Miri Care Connect.
+
+Kami kini berada di SMK Lutong. Jika anda mempunyai barang di rumah yang tidak lagi digunakan tetapi masih dalam keadaan baik, anda dialu-alukan untuk menyumbangkannya melalui platform kami. Semua barang yang disumbangkan akan diagihkan kepada komuniti yang memerlukan.
+
+📍 Tempat Sumbangan:
+Bilik Pengawas, SMK Lutong
+(Anda boleh mendekati mana-mana pengawas yang memakai kot hitam, dan mereka akan memandu anda ke tempat tersebut.)
+
+🕒 Jadual Sumbangan:
+Isnin / Selasa / Jumaat
+6:15 PAGI – 6:40 PAGI
+
+Pengawas akan bertugas pada masa ini untuk membantu proses sumbangan.
+
+Semua barang yang disumbangkan akan disahkan oleh Pengawas. Setelah barang disahkan berada dalam keadaan baik dan boleh digunakan, ia akan diluluskan dalam sistem kami, dan mata ganjaran akan dikreditkan ke akaun anda. Jumlah mata ditentukan oleh pengawas.
+
+🎁 Penebusan Ganjaran:
+Mata terkumpul boleh ditebus untuk baucar di Koperasi Sekolah. Sila ingat kod (RD-XXXX) yang diberikan oleh sistem. Pengawas Koperasi akan mencari nama anda dalam senarai nama melalui kod tersebut. Jadi, kod itu SANGAT PENTING.
+
+Terima kasih kerana menyokong Miri Care Connect dan membantu kami membuat perbezaan positif dalam komuniti kami 💙`,
+    zh: `欢迎来到 Miri Care Connect
+大家好！
+欢迎来到我们的社区服务官方网站 – Miri Care Connect。
+
+我们目前在 SMK Lutong 提供服务。如果您家里有不再使用但状况良好的物品，欢迎通过我们的平台捐赠。所有捐赠的物品将分发给有需要的社区。
+
+📍 捐赠地点：
+Bilik Pengawas, SMK Lutong
+（您可以联系任何穿着黑色外套的巡查员，他们会指引您前往地点。）
+
+🕒 捐赠时间表：
+星期一 / 星期二 / 星期五
+早上 6:15 – 早上 6:40
+
+巡查员将在这些时间值班，协助捐赠过程。
+
+所有捐赠的物品将由巡查员核实。一旦确认物品状况良好且可用，它将在我们的系统中获得批准，奖励积分将记入您的帐户。积分数量由巡查员决定。
+
+🎁 奖励兑换：
+累积的积分可以在学校合作社（Koperasi）兑换代金券。请记住系统给出的代码（RD-XXXX）。合作社巡查员（Pengawas Koperasi）将通过代码在名单中搜索您的名字。所以，代码非常重要。
+
+感谢您支持 Miri Care Connect 并帮助我们在社区中做出积极的改变 💙`,
+    bi: `Selamat Datai ngagai Miri Care Connect
+Hello semua!
+Selamat datai ngagai laman web rasmi Khidmat Masyarakat kami – Miri Care Connect.
+
+Kami diatu bisi di SMK Lutong. Enti kita bisi barang ba rumah ti enda agi dikena tang agi manah, kita diperansang meri barang nya nengah platform kami. Semua barang ti diberi deka diagih ngagai komuniti ti begunaka bantu.
+
+📍 Endur Meri Barang:
+Bilik Pengawas, SMK Lutong
+(Kita tau nanya sebarang pengawas ti ngena baju kot chelum, lalu sida deka mai kita ngagai endur nya.)
+
+🕒 Jadual Meri Barang:
+Hari Satu / Hari Dua / Hari Lima
+6:15 Pagi – 6:40 Pagi
+
+Pengawas deka bertugas maya tu kena mantu proses meri barang.
+
+Semua barang ti diberi deka diperiksa ulih Pengawas. Pengudah barang disahka manah sereta tau dikena, ia deka dikemendarka dalam sistem kami, lalu poin upah deka dikredit ngagai akaun kita. Penyampau poin deka ditetapka ulih pengawas.
+
+🎁 Penukar Upah:
+Poin ti udah digumpul tau ditukar nyadi baucar ba Koperasi Sekolah. Tulung ingat kod (RD-XXXX) ti diberi sistem. Pengawas Koperasi deka ngiga nama kita dalam lis nama nengah kod nya. Nya alai, kod nya CHUKUP PENTING.
+
+Terima kasih laban nyukung Miri Care Connect sereta mantu kami ngaga ubah ti manah dalam komuniti kami 💙`
+};
+
+const GUIDE_CONTENT = {
+    en: `Step 1: Register / Log In
+Create an account using your moe account.
+At the initial stage, Miri Care Connect is available for SMK Lutong students only.
+
+Step 2: Submit a Donation
+After logging in, register your donation by:
+Selecting the type of item (e.g. clothes, books, daily necessities)
+Entering the quantity
+Submitting the donation through the system
+⚠️ Please ensure all items are clean, safe, and in good usable condition.
+
+Step 3: Check Drop-Off Details
+Available drop-off day and time
+Drop-off location: Bilik Pengawas, SMK Lutong
+📅 Donation Days: Monday / Tuesday / Friday
+🕒 Time: 6:15 AM – 6:50 AM
+You may approach any prefect wearing a black coat for assistance.
+
+Step 4: Submit Items for Verification
+Bring your items to the venue at the scheduled time.
+Prefects on duty will receive and inspect the items.
+
+Step 5: Donation Verification
+1. The Prefects will verify whether:
+- The item is in good condition
+- The item is suitable for donation
+2. Your donation status will be updated in the system as:
+- Approved
+- Not Approved
+
+Step 6: Earn Reward Points
+For every approved donation, reward points will be determined by prefects after checking items and points will be credited to your account.
+
+Step 7: Redeem Rewards
+Accumulated points can be used to redeem vouchers at the "Point Shop", subject to availability and terms. After that, you can go to Koperasi and redeem the items you want such as book, ice-cream, or anything.
+ 
+Important Notes:
+1. Donations must follow the scheduled time and location.
+2. Items that are damaged or unusable may not be approved.
+3. All approved items will be distributed to communities in need (Kampung Pangkalan) through our project team.
+
+Miri Care Connect aims to encourage kindness, reduce waste, and support those in need through a transparent and meaningful donation system.`,
+    ms: `Langkah 1: Daftar / Log Masuk
+Buat akaun menggunakan akaun moe anda.
+Pada peringkat awal, Miri Care Connect hanya tersedia untuk pelajar SMK Lutong sahaja.
+
+Langkah 2: Hantar Sumbangan
+Selepas log masuk, daftarkan sumbangan anda dengan:
+Memilih jenis barang (contoh: pakaian, buku, keperluan harian)
+Memasukkan kuantiti
+Menghantar sumbangan melalui sistem
+⚠️ Sila pastikan semua barang bersih, selamat, dan dalam keadaan baik untuk digunakan.
+
+Langkah 3: Semak Butiran Penyerahan
+Hari dan masa penyerahan yang tersedia
+Lokasi penyerahan: Bilik Pengawas, SMK Lutong
+📅 Hari Sumbangan: Isnin / Selasa / Jumaat
+🕒 Masa: 6:15 PAGI – 6:50 PAGI
+Anda boleh mendekati mana-mana pengawas yang memakai kot hitam untuk bantuan.
+
+Langkah 4: Hantar Barang untuk Pengesahan
+Bawa barang anda ke tempat tersebut pada masa yang dijadualkan.
+Pengawas yang bertugas akan menerima dan memeriksa barang tersebut.
+
+Langkah 5: Pengesahan Sumbangan
+1. Pengawas akan mengesahkan sama ada:
+- Barang tersebut dalam keadaan baik
+- Barang tersebut sesuai untuk disumbangkan
+2. Status sumbangan anda akan dikemaskini dalam sistem sebagai:
+- Diluluskan
+- Tidak Diluluskan
+
+Langkah 6: Dapatkan Mata Ganjaran
+Untuk setiap sumbangan yang diluluskan, mata ganjaran akan ditentukan oleh pengawas selepas memeriksa barang dan mata akan dikreditkan ke akaun anda.
+
+Langkah 7: Tebus Ganjaran
+Mata terkumpul boleh digunakan untuk menebus baucar di "Kedai Mata", tertakluk kepada ketersediaan dan terma. Selepas itu, anda boleh pergi ke Koperasi dan menebus barang yang anda mahukan seperti buku, aiskrim, atau apa sahaja.
+
+Nota Penting:
+1. Sumbangan mesti mengikut masa dan lokasi yang dijadualkan.
+2. Barang yang rosak atau tidak boleh digunakan mungkin tidak diluluskan.
+3. Semua barang yang diluluskan akan diagihkan kepada komuniti yang memerlukan (Kampung Pangkalan) melalui pasukan projek kami.
+
+Miri Care Connect bertujuan untuk menggalakkan kebaikan, mengurangkan pembaziran, dan menyokong mereka yang memerlukan melalui sistem sumbangan yang telus dan bermakna.`,
+    zh: `步骤 1：注册 / 登录
+使用您的 moe 帐户创建一个帐户。
+在初始阶段，Miri Care Connect 仅供 SMK Lutong 学生使用。
+
+步骤 2：提交捐赠
+登录后，通过以下方式登记您的捐赠：
+选择物品类型（例如衣服、书籍、日用品）
+输入数量
+通过系统提交捐赠
+⚠️ 请确保所有物品干净、安全且状况良好可用。
+
+步骤 3：检查投放详情
+可用的投放日期和时间
+投放地点：Bilik Pengawas, SMK Lutong
+📅 捐赠日：星期一 / 星期二 / 星期五
+🕒 时间：早上 6:15 – 早上 6:50
+您可以联系任何穿着黑色外套的巡查员寻求帮助。
+
+步骤 4：提交物品进行核实
+在预定时间将您的物品带到地点。
+值班巡查员将接收并检查物品。
+
+步骤 5：捐赠核实
+1. 巡查员将核实：
+- 物品状况良好
+- 物品适合捐赠
+2. 您的捐赠状态将在系统中更新为：
+- 已批准
+- 未批准
+
+步骤 6：赚取奖励积分
+对于每一项获批的捐赠，奖励积分将由巡查员在检查物品后决定，积分将记入您的帐户。
+
+步骤 7：兑换奖励
+累积的积分可用于在“积分商店”兑换代金券，视供应情况和条款而定。之后，您可以去合作社兑换您想要的物品，如书籍、冰淇淋或任何东西。
+
+重要提示：
+1. 捐赠必须遵守预定的时间和地点。
+2. 损坏或无法使用的物品可能不被批准。
+3. 所有获批的物品将通过我们的项目团队分发给有需要的社区（Kampung Pangkalan）。
+
+Miri Care Connect 旨在通过透明和有意义的捐赠系统鼓励善意，减少浪费并支持有需要的人。`,
+    bi: `Langkah 1: Rejista / Log Masuk
+Gaga akaun ngena akaun moe kita.
+Ba renggat tumu, Miri Care Connect semina dibuka ngagai nembiak SMK Lutong aja.
+
+Langkah 2: Hantar Pemeri
+Pengudah log masuk, rejista pemeri kita ngena chara:
+Milih bansa barang (chunto: gari, bup, keperluan ninting hari)
+Masuk ke penyampau
+Nghantar pemeri nengah sistem
+⚠️ Tulung tentuka semua barang beresi, selamat, enggau manah dikena.
+
+Langkah 3: Periksa Penerang Nganjung
+Hari enggau masa nganjung ti bisi
+Endur nganjung: Bilik Pengawas, SMK Lutong
+📅 Hari Meri: Hari Satu / Hari Dua / Hari Lima
+🕒 Masa: 6:15 Pagi – 6:50 Pagi
+Kita tau nanya sebarang pengawas ti ngena baju kot chelum minta tulung.
+
+Langkah 4: Hantar Barang ngambika Diperiksa
+Bai barang kita ngagai endur nya maya masa ti udah ditetapka.
+Pengawas ti bertugas deka nerima lalu meriksa barang nya.
+
+Langkah 5: Pengesahan Pemeri
+1. Pengawas deka nentuka sekalika:
+- Barang nya manah
+- Barang nya patut diberi
+2. Status pemeri kita deka diubah dalam sistem nyadi:
+- Dikemendarka
+- Enda Dikemendarka
+
+Langkah 6: Ulih Poin Upah
+Ungkup tetiap pemeri ti dikemendarka, poin upah deka ditetapka pengawas pengudah meriksa barang lalu poin deka dikredit ngagai akaun kita.
+
+Langkah 7: Tukar Upah
+Poin ti udah digumpul tau dikena nukar baucar ba "Kedai Poin", bepanggai ba stok enggau atur. Pengudah nya, kita tau ngagai Koperasi lalu nukar barang ti dikedeka kita baka bup, aiskrim, tauka nama-nama aja.
+
+Nota Penting:
+1. Pemeri mesti nitihka masa enggau endur ti dijadualka.
+2. Barang ti rusak tauka enda ulih dikena engka enda dikemendarka.
+3. Semua barang ti dikemendarka deka diagih ngagai komuniti ti begunaka bantu (Kampung Pangkalan) nengah tim projek kami.
+
+Miri Care Connect bisi tuju deka ngansak penyiru, ngurangka pengerusak, enggau nyukung sida ti begunaka bantu nengah sistem pemeri ti telus enggau bermakna.`
+};
+
+const HomePage: React.FC<{ t: any, user: any, lang: Language }> = ({ t, user, lang }) => {
+    // Announcement state removed as we use hardcoded content now
+    // Guide state removed as we use hardcoded content now
+    
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
     
     useEffect(() => {
-        if (typeof firebase === 'undefined' || !firebase.firestore) return;
-        const db = firebase.firestore();
-        
-        const unsubAnnounce = db.collection('settings').doc('announcement').onSnapshot((doc: any) => {
-            if (doc.exists) {
-                const data = doc.data();
-                setAnnouncement(data);
-                setEditValue(data.text || '');
-            }
-        });
-
-        const unsubGuide = db.collection('settings').doc('user_guide').onSnapshot((doc: any) => {
-            if (doc.exists) {
-                setGuideContent(doc.data().content || '');
-            }
-            setLoadingGuide(false);
-        }, (err: any) => {
-            setLoadingGuide(false);
-        });
-
-        return () => { unsubAnnounce(); unsubGuide(); };
+        // Listeners removed as we use hardcoded content
     }, []);
 
-    const saveAnnouncement = async () => {
-        if (typeof firebase === 'undefined' || !firebase.firestore) return;
-        setTranslating(true);
-        try {
-            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-            
-            const prompt = `Translate the following announcement into 3 languages: Bahasa Melayu, Chinese (Simplified), and Iban. 
-            Return the result as a JSON object with keys: ms, zh, bi. 
-            Text to translate: "${editValue}"`;
-
-            const response = await ai.models.generateContent({
-                model: "gemini-3-flash-preview",
-                contents: prompt,
-                config: { responseMimeType: "application/json" }
-            });
-
-            const translationsData = JSON.parse(response.text || '{}');
-
-            await firebase.firestore().collection('settings').doc('announcement').set({
-                text: editValue,
-                text_ms: translationsData.ms || editValue,
-                text_zh: translationsData.zh || editValue,
-                text_bi: translationsData.bi || editValue,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            setIsEditing(false);
-        } catch (e) {
-            console.error("Translation error:", e);
-            // Fallback to just saving the original text if translation fails
-            await firebase.firestore().collection('settings').doc('announcement').set({
-                text: editValue,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            setIsEditing(false);
-        } finally {
-            setTranslating(false);
-        }
-    };
-
     const getAnnouncementText = () => {
-        if (lang === Language.BM) return announcement.text_ms || announcement.text || t('announcement_body');
-        if (lang === Language.BC) return announcement.text_zh || announcement.text || t('announcement_body');
-        if (lang === Language.BI) return announcement.text_bi || announcement.text || t('announcement_body');
-        return announcement.text || t('announcement_body');
+        if (lang === Language.BM) return ANNOUNCEMENT_CONTENT.ms;
+        if (lang === Language.BC) return ANNOUNCEMENT_CONTENT.zh;
+        if (lang === Language.BI) return ANNOUNCEMENT_CONTENT.bi;
+        return ANNOUNCEMENT_CONTENT.en;
     };
 
-    const saveGuide = async () => {
-        if (typeof firebase === 'undefined' || !firebase.firestore) return;
-        try {
-            await firebase.firestore().collection('settings').doc('user_guide').set({
-                content: guideContent,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            setIsEditingGuide(false);
-            alert(t('save') + "!");
-        } catch (e: any) {
-            alert("Error saving: " + e.message);
-        }
+    const getGuideText = () => {
+        if (lang === Language.BM) return GUIDE_CONTENT.ms;
+        if (lang === Language.BC) return GUIDE_CONTENT.zh;
+        if (lang === Language.BI) return GUIDE_CONTENT.bi;
+        return GUIDE_CONTENT.en;
     };
 
     return (
@@ -287,84 +477,31 @@ const HomePage: React.FC<{ t: any, user: any, lang: Language }> = ({ t, user, la
             <div className="space-y-4 px-2">
                 <div className="flex justify-between items-end">
                     <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">{t('announcements')}</h3>
-                    {isAdmin && (
-                        <button 
-                            onClick={() => isEditing ? saveAnnouncement() : setIsEditing(true)}
-                            className="text-[10px] font-black uppercase text-[#3498db] tracking-widest hover:underline px-2"
-                        >
-                            {isEditing ? t('publish') : t('update')}
-                        </button>
-                    )}
                 </div>
                 
                 <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 sm:p-12 shadow-sm relative transition-all">
-                    {isEditing ? (
-                        <div className="space-y-4">
-                            <textarea 
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="w-full min-h-[200px] p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl font-bold text-[#2c3e50] text-sm outline-none focus:border-[#3498db] transition-all"
-                                placeholder="Type announcement here..."
-                            />
-                            <div className="flex gap-4">
-                                <button onClick={() => setIsEditing(false)} className="text-[10px] font-black uppercase text-gray-400">{t('cancel')}</button>
-                                <button onClick={saveAnnouncement} disabled={translating} className="text-[10px] font-black uppercase text-[#3498db] flex items-center gap-2">
-                                    {translating && <i className="fas fa-spinner fa-spin"></i>}
-                                    {t('publish')}
-                                </button>
+                    <div className="flex gap-4 sm:gap-6">
+                        <div className="w-10 h-10 flex-shrink-0 bg-blue-50 rounded-full flex items-center justify-center text-[#3498db]">
+                            <i className="fas fa-bullhorn"></i>
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-black text-[#2c3e50] uppercase italic mb-1">{t('announcement_title')}</h4>
+                            <div className="whitespace-pre-wrap font-bold text-[#2c3e50] text-sm leading-relaxed">
+                                {getAnnouncementText()}
                             </div>
                         </div>
-                    ) : (
-                        <div className="flex gap-4 sm:gap-6">
-                            <div className="w-10 h-10 flex-shrink-0 bg-blue-50 rounded-full flex items-center justify-center text-[#3498db]">
-                                <i className="fas fa-bullhorn"></i>
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="font-black text-[#2c3e50] uppercase italic mb-1">{t('announcement_title')}</h4>
-                                <div className="whitespace-pre-wrap font-bold text-[#2c3e50] text-sm leading-relaxed">
-                                    {getAnnouncementText()}
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
             </div>
 
             <div className="space-y-4 px-2 pt-8 border-t border-gray-100">
                 <div className="flex justify-between items-end">
                     <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] ml-2">{t('user_guide')}</h3>
-                    {isAdmin && (
-                        <button 
-                            onClick={() => isEditingGuide ? saveGuide() : setIsEditingGuide(true)}
-                            className="text-[10px] font-black uppercase text-[#3498db] tracking-widest hover:underline px-2"
-                        >
-                            {isEditingGuide ? t('publish') : t('update')}
-                        </button>
-                    )}
                 </div>
                 <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 sm:p-12 shadow-sm relative transition-all min-h-[300px]">
-                    {loadingGuide ? (
-                        <div className="py-20 text-center text-gray-400 uppercase font-black tracking-widest text-xs italic">
-                            {t('loading_citizens')}
-                        </div>
-                    ) : isEditingGuide ? (
-                        <div className="space-y-4">
-                            <textarea 
-                                value={guideContent}
-                                onChange={(e) => setGuideContent(e.target.value)}
-                                className="w-full min-h-[400px] p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl font-bold text-[#2c3e50] text-sm outline-none focus:border-[#3498db] transition-all"
-                                placeholder="Type user guide here..."
-                            />
-                            <div className="flex gap-4">
-                                <button onClick={() => setIsEditingGuide(false)} className="text-[10px] font-black uppercase text-gray-400">{t('cancel')}</button>
-                                <button onClick={saveGuide} className="text-[10px] font-black uppercase text-[#3498db]">{t('publish')}</button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="whitespace-pre-wrap font-bold text-[#2c3e50] text-sm leading-relaxed">
-                            {guideContent || t('user_guide_default')}
-                        </div>
-                    )}
+                    <div className="whitespace-pre-wrap font-bold text-[#2c3e50] text-sm leading-relaxed">
+                        {getGuideText()}
+                    </div>
                 </div>
             </div>
         </div>
@@ -832,12 +969,12 @@ export const App: React.FC = () => {
                     .text-blue-500, .text-blue-500 * { color: #339af0 !important; }
                     
                     /* Kindness Level Points - Force Orange */
-                    .text-\[\#f39c12\], .text-\[\#f39c12\] * { 
+                    .text-\\[\\#f39c12\\], .text-\\[\\#f39c12\\] * { 
                         color: #f39c12 !important; 
                     }
 
                     /* Announcement Title and other Dark Blue text - Force White */
-                    .text-\[\#2c3e50\], .text-\[\#2c3e50\] * {
+                    .text-\\[\\#2c3e50\\], .text-\\[\\#2c3e50\\] * {
                         color: #f8f9fa !important;
                     }
 
@@ -852,34 +989,34 @@ export const App: React.FC = () => {
                     .kindness-box * {
                         color: #f8f9fa !important;
                     }
-                    .kindness-box .text-\[\#f39c12\] {
+                    .kindness-box .text-\\[\\#f39c12\\] {
                         color: #f39c12 !important;
                     }
 
                     /* Notification Modal Fixes */
-                    .fixed.inset-0.bg-black\/80 .bg-white {
+                    .notif-content {
                         background: #0d1930 !important;
                         border: 1px solid rgba(255,255,255,0.1) !important;
                     }
-                    .fixed.inset-0.bg-black\/80 .bg-gray-50 {
+                    .notif-header {
                         background: rgba(255,255,255,0.05) !important;
                         border-bottom: 1px solid rgba(255,255,255,0.1) !important;
                     }
-                    .fixed.inset-0.bg-black\/80 .text-\[\#2c3e50\] {
+                    .notif-header h3 {
                         color: #f8f9fa !important;
                     }
-                    .fixed.inset-0.bg-black\/80 .bg-gray-200 {
+                    .notif-content .bg-gray-200 {
                         background: rgba(255,255,255,0.1) !important;
                         color: #f8f9fa !important;
                     }
-                    .fixed.inset-0.bg-black\/80 .bg-blue-50\/50 {
+                    .notif-content .bg-blue-50\/50 {
                         background: rgba(52, 152, 219, 0.1) !important;
                         border-color: rgba(52, 152, 219, 0.2) !important;
                     }
-                    .fixed.inset-0.bg-black\/80 .text-gray-800 {
+                    .notif-content .text-gray-800 {
                         color: #f8f9fa !important;
                     }
-                    .fixed.inset-0.bg-black\/80 .text-gray-500 {
+                    .notif-content .text-gray-500 {
                         color: #adb5bd !important;
                     }
                     
@@ -895,10 +1032,16 @@ export const App: React.FC = () => {
                     .bg-white { background: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255,255,255,0.1) !important; }
                     
                     /* Status Badges in Dark Mode */
-                    .bg-amber-100 { background: rgba(243, 156, 18, 0.2) !important; border: 1px solid rgba(243, 156, 18, 0.3) !important; }
-                    .bg-green-100 { background: rgba(46, 204, 113, 0.2) !important; border: 1px solid rgba(46, 204, 113, 0.3) !important; }
-                    .bg-blue-100 { background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.3) !important; }
+                    .bg-amber-100, .bg-amber-50 { background: rgba(243, 156, 18, 0.2) !important; border: 1px solid rgba(243, 156, 18, 0.3) !important; color: #f39c12 !important; }
+                    .bg-green-100, .bg-green-50 { background: rgba(46, 204, 113, 0.2) !important; border: 1px solid rgba(46, 204, 113, 0.3) !important; color: #2ecc71 !important; }
+                    .bg-blue-100, .bg-blue-50 { background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.3) !important; color: #3498db !important; }
+                    .bg-red-100, .bg-red-50 { background: rgba(231, 76, 60, 0.2) !important; border: 1px solid rgba(231, 76, 60, 0.3) !important; color: #e74c3c !important; }
                     
+                    /* Force text colors for badges */
+                    .bg-amber-100 *, .bg-amber-50 *, .bg-green-100 *, .bg-green-50 *, .bg-blue-100 *, .bg-blue-50 *, .bg-red-100 *, .bg-red-50 * {
+                        color: inherit !important;
+                    }
+
                     /* Active Tab in History */
                     .bg-white.shadow-sm { background: rgba(255, 255, 255, 0.2) !important; }
                     
@@ -912,9 +1055,91 @@ export const App: React.FC = () => {
                     .bg-blue-50 { background: rgba(52, 152, 219, 0.2) !important; }
 
                     .bg-gray-50, .bg-[#f8f9fa], .bg-gray-100 { background: rgba(255,255,255,0.05) !important; }
-                    .border-gray-100, .border-gray-200 { border-color: rgba(255,255,255,0.1) !important; }
+                    .border-gray-100, .border-gray-200, .border-gray-50 { border-color: rgba(255,255,255,0.1) !important; }
                     input, textarea, select { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.2) !important; color: white !important; }
                     .theme-card, .bg-white { background: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; }
+                    
+                    /* General Text Colors */
+                    .text-gray-300, .text-gray-400, .text-gray-500 { color: #adb5bd !important; }
+                    .text-gray-600, .text-gray-700, .text-gray-800 { color: #f8f9fa !important; }
+                    h1, h2, h3, h4, h5, h6, p, span, div, label { color: inherit; }
+                    body { color: #f8f9fa; }
+                    
+                    /* Admin Panel & History Specifics */
+                    .admin-panel-container, .history-page-container {
+                        background: rgba(13, 25, 48, 0.95) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                        color: #f8f9fa !important;
+                    }
+                    .admin-panel-container .bg-white, .history-page-container .bg-white { 
+                        background: rgba(255, 255, 255, 0.05) !important; 
+                        border-color: rgba(255, 255, 255, 0.1) !important;
+                    }
+                    
+                    /* CRITICAL: Force text color overrides for Admin/History/Offers/Shop */
+                    .admin-panel-container .text-\\[\\#2c3e50\\], 
+                    .history-page-container .text-\\[\\#2c3e50\\],
+                    .offers-page-container .text-\\[\\#2c3e50\\],
+                    .shop-page-container .text-\\[\\#2c3e50\\],
+                    .admin-panel-container [class*="text-[#2c3e50]"],
+                    .history-page-container [class*="text-[#2c3e50]"],
+                    .offers-page-container [class*="text-[#2c3e50]"],
+                    .shop-page-container [class*="text-[#2c3e50]"] { 
+                        color: #f8f9fa !important; 
+                    }
+
+                    /* CRITICAL: Input/Form overrides for Admin/History/Offers/Shop */
+                    .admin-panel-container input, .admin-panel-container textarea, .admin-panel-container select,
+                    .history-page-container input, .history-page-container textarea, .history-page-container select,
+                    .offers-page-container input, .offers-page-container textarea, .offers-page-container select,
+                    .shop-page-container input, .shop-page-container textarea, .shop-page-container select {
+                        background-color: rgba(0, 0, 0, 0.4) !important;
+                        color: #ffffff !important;
+                        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    }
+                    
+                    .admin-panel-container input::placeholder, .admin-panel-container textarea::placeholder,
+                    .offers-page-container input::placeholder, .offers-page-container textarea::placeholder,
+                    .shop-page-container input::placeholder, .shop-page-container textarea::placeholder {
+                        color: rgba(255, 255, 255, 0.4) !important;
+                    }
+
+                    /* Fix for bg-gray-50 containers (forms, details) */
+                    .admin-panel-container .bg-gray-50, .history-page-container .bg-gray-50,
+                    .offers-page-container .bg-gray-50, .shop-page-container .bg-gray-50 {
+                        background-color: rgba(255, 255, 255, 0.03) !important;
+                        border-color: rgba(255, 255, 255, 0.1) !important;
+                        color: #f8f9fa !important;
+                    }
+                    
+                    /* Fix for unreadable badges in dark mode */
+                    .bg-green-50, .bg-green-100, .bg-green-500 {
+                        background: rgba(46, 204, 113, 0.2) !important;
+                        color: #2ecc71 !important;
+                        border: 1px solid rgba(46, 204, 113, 0.4) !important;
+                    }
+                    .bg-green-50 *, .bg-green-100 *, .bg-green-500 * {
+                        color: #2ecc71 !important;
+                    }
+                    
+                    .bg-amber-50, .bg-amber-100, .bg-amber-500 {
+                        background: rgba(243, 156, 18, 0.2) !important;
+                        color: #f39c12 !important;
+                        border: 1px solid rgba(243, 156, 18, 0.4) !important;
+                    }
+                    .bg-amber-50 *, .bg-amber-100 *, .bg-amber-500 * {
+                        color: #f39c12 !important;
+                    }
+                    
+                    .bg-blue-50, .bg-blue-100, .bg-blue-500 {
+                        background: rgba(52, 152, 219, 0.2) !important;
+                        color: #3498db !important;
+                        border: 1px solid rgba(52, 152, 219, 0.4) !important;
+                    }
+                    .bg-blue-50 *, .bg-blue-100 *, .bg-blue-500 * {
+                        color: #3498db !important;
+                    }
+                    
                     .shadow-xl, .shadow-2xl, .shadow-sm { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important; }
                     
                     /* Floating Buttons Outline Fix */
@@ -1225,9 +1450,9 @@ export const App: React.FC = () => {
             )}
 
             {isNotifOpen && (
-                <div className="fixed inset-0 bg-black/80 z-[600] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setIsNotifOpen(false)}>
-                    <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-300 max-h-[80vh]" onClick={e => e.stopPropagation()}>
-                        <div className="p-6 bg-gray-50 border-b flex justify-between items-center">
+                <div className="fixed inset-0 bg-black/80 z-[600] flex items-center justify-center p-4 backdrop-blur-sm notif-overlay" onClick={() => setIsNotifOpen(false)}>
+                    <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in duration-300 max-h-[80vh] notif-content" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 bg-gray-50 border-b flex justify-between items-center notif-header">
                             <h3 className="font-black uppercase text-sm italic text-[#2c3e50] tracking-tighter">{t('activity_logs')}</h3>
                             <button onClick={() => setIsNotifOpen(false)} className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i className="fas fa-times text-xs"></i></button>
                         </div>
@@ -1835,7 +2060,7 @@ const ShopPage: React.FC<{user: any, t: any, onAuth: () => void, onRedeemConfirm
 
     if (!isShopOpen && !isAdmin) {
         return (
-            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border-4 border-dashed border-gray-100 px-8 text-center animate-in fade-in zoom-in duration-500">
+            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border-4 border-dashed border-gray-100 px-8 text-center animate-in fade-in zoom-in duration-500 shop-page-container">
                 <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-4xl mb-6">
                     <i className="fas fa-lock"></i>
                 </div>
@@ -1850,7 +2075,7 @@ const ShopPage: React.FC<{user: any, t: any, onAuth: () => void, onRedeemConfirm
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500 shop-page-container">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <h2 className="text-3xl font-black italic uppercase text-[#2c3e50] tracking-tighter shrink-0">{t('points_shop')}</h2>
@@ -2017,7 +2242,7 @@ const HistoryPage: React.FC<{user: any, t: any, onAuth: () => void}> = ({user, t
     if (!user) return <div className="py-20 text-center"><button onClick={onAuth} className="bg-[#3498db] text-white px-8 py-4 rounded-2xl font-black uppercase shadow-xl">{t('login')}</button></div>;
     
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 history-page-container">
             <h2 className="text-3xl font-black italic uppercase text-[#2c3e50] tracking-tighter">{t('history')}</h2>
             
             <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl max-w-md">
@@ -2576,7 +2801,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
     };
 
     return (
-        <div className={`h-full flex flex-col ${isKoperasiMenu ? '' : 'p-4 sm:p-6'} overflow-hidden bg-white`}>
+        <div className={`h-full flex flex-col ${isKoperasiMenu ? '' : 'p-4 sm:p-6'} overflow-hidden bg-white admin-panel-container`}>
             <div className="flex justify-between items-start mb-4 shrink-0">
                 <h2 className="text-xl font-black italic uppercase text-[#2c3e50] border-b-4 border-[#3498db] pb-2 inline-block">{isAdmin ? t('admin_panel') : t('koperasi_panel')}</h2>
                 {isAdmin && activeTab === 'vouchers' && (
