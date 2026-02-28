@@ -601,7 +601,9 @@ export const App: React.FC = () => {
                     userClass: newUser.userClass,
                     birthdate: newUser.birthdate,
                     address: newUser.address,
-                    password: newUser.password // This maps to Column G
+                    password: newUser.password, // This maps to Column G
+                    status: newUser.status, // This maps to Column H
+                    secondCheck: newUser.secondCheck // This maps to Column I
                 })
             });
         } catch (err) {
@@ -1661,7 +1663,9 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                         phone: dataInput.phone, address: dataInput.address, userClass: dataInput.userClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
-                        password: dataInput.password 
+                        password: dataInput.password,
+                        status: 'Pending',
+                        secondCheck: 'Pending'
                     };
                     await firebase.firestore().collection('users').doc(user.uid).set(userData);
                     await onRegisterSuccess(userData);
@@ -2689,7 +2693,9 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                 address: editingUser.address || '',
                 birthdate: editingUser.birthdate || '',
                 userClass: editingUser.userClass || '',
-                password: editingUser.password || ''
+                password: editingUser.password || '',
+                status: editingUser.status || '',
+                secondCheck: editingUser.secondCheck || ''
             });
             
             if (onUpdateUser) {
@@ -2863,6 +2869,8 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 <AdminInput label={t('birthdate')} value={editingUser.birthdate} onChange={v => setEditingUser({...editingUser, birthdate: v})} />
                                 <AdminInput label={t('class_label')} value={editingUser.userClass} onChange={v => setEditingUser({...editingUser, userClass: v})} />
                                 <AdminInput label={t('password_label')} value={editingUser.password || ''} onChange={v => setEditingUser({...editingUser, password: v})} />
+                                <AdminInput label="Status (Col H)" value={editingUser.status || ''} onChange={v => setEditingUser({...editingUser, status: v})} />
+                                <AdminInput label="2nd Check (Col I)" value={editingUser.secondCheck || ''} onChange={v => setEditingUser({...editingUser, secondCheck: v})} />
                                 <div className="flex gap-2">
                                     <button type="submit" className="flex-1 bg-[#2ecc71] text-white py-2 rounded-lg font-black text-[10px] uppercase">{t('save')}</button>
                                     <button type="button" onClick={() => setEditingUser(null)} className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg font-black text-[10px] uppercase">{t('cancel')}</button>
