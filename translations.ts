@@ -148,7 +148,9 @@ export const translations: Record<Language, Record<string, string>> = {
         "offer_declined": "Offer Declined",
         "offer_declined_msg": "Your offer for {item} was declined. Reason: {reason}",
         "redeem_confirmed": "Redeem Confirmed",
-        "redeem_confirmed_msg": "Your redeem for {item} has been confirmed. Code: {code}"
+        "redeem_confirmed_msg": "Your redeem for {item} has been confirmed. Code: {code}",
+        "hide_identity": "Hide Identity (Blur Name & Class)",
+        "show_identity": "Show Identity"
     },
     [Language.BM]: {
         "menu": "Menu",
@@ -296,7 +298,9 @@ export const translations: Record<Language, Record<string, string>> = {
         "offer_declined": "Tawaran Ditolak",
         "offer_declined_msg": "Tawaran anda untuk {item} telah ditolak. Sebab: {reason}",
         "redeem_confirmed": "Penebusan Disahkan",
-        "redeem_confirmed_msg": "Penebusan anda untuk {item} telah disahkan. Kod: {code}"
+        "redeem_confirmed_msg": "Penebusan anda untuk {item} telah disahkan. Kod: {code}",
+        "hide_identity": "Sembunyikan Identiti (Kaburkan Nama & Kelas)",
+        "show_identity": "Tunjukkan Identiti"
     },
     [Language.BC]: {
         "menu": "菜单",
@@ -444,7 +448,9 @@ export const translations: Record<Language, Record<string, string>> = {
         "offer_declined": "提供已拒绝",
         "offer_declined_msg": "您提供的 {item} 已被拒绝。原因：{reason}",
         "redeem_confirmed": "兑换已确认",
-        "redeem_confirmed_msg": "您兑换的 {item} 已确认。代码：{code}"
+        "redeem_confirmed_msg": "您兑换的 {item} 已确认。代码：{code}",
+        "hide_identity": "隐藏身份（模糊姓名和班级）",
+        "show_identity": "显示身份"
     },
     [Language.BI]: {
         "menu": "Menu",
@@ -592,6 +598,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "offer_declined": "Tawaran Ditolak",
         "offer_declined_msg": "Tawaran nuan ungkup {item} udah ditolak. Kebuah: {reason}",
         "redeem_confirmed": "Tebus Udah Mujur",
-        "redeem_confirmed_msg": "Tebus nuan ungkup {item} udah mujur. Kod: {code}"
+        "redeem_confirmed_msg": "Tebus nuan ungkup {item} udah mujur. Kod: {code}",
+        "hide_identity": "Lalai Identiti (Kabur Nama & Kelas)",
+        "show_identity": "Tunjuk Identiti"
     }
 };

@@ -155,15 +155,25 @@ const OffersPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                             <h3 className="font-black text-[#2c3e50] uppercase truncate mr-2">{item.itemName}</h3>
                                             <span className="bg-blue-50 text-[#3498db] text-[9px] font-black px-2 py-1 rounded-full uppercase flex-shrink-0">{item.qty} qty</span>
                                         </div>
-                                        <div className="text-[10px] text-gray-400 font-bold uppercase space-y-1">
-                                            <p><i className="fas fa-tag mr-2 text-[#3498db] w-4"></i>{displayCategory}</p>
-                                            {item.expiryDate && (
-                                                <p className="text-red-500"><i className="fas fa-hourglass-end mr-2 text-red-500 w-4"></i>Exp: {item.expiryDate}</p>
-                                            )}
-                                            <p><i className="fas fa-user mr-2 text-[#3498db] w-4"></i>{item.donorName}</p>
-                                            <p><i className="fas fa-school mr-2 text-[#3498db] w-4"></i>{item.userClass || 'N/A'}</p>
-                                            <p><i className="fas fa-calendar mr-2 text-[#3498db] w-4"></i>{formattedDate} • {formattedTime}</p>
-                                        </div>
+                                            <div className="text-[10px] text-gray-400 font-bold uppercase space-y-1">
+                                                <p><i className="fas fa-tag mr-2 text-[#3498db] w-4"></i>{displayCategory}</p>
+                                                {item.expiryDate && (
+                                                    <p className="text-red-500"><i className="fas fa-hourglass-end mr-2 text-red-500 w-4"></i>Exp: {item.expiryDate}</p>
+                                                )}
+                                                <p className="flex items-center">
+                                                    <i className="fas fa-user mr-2 text-[#3498db] w-4"></i>
+                                                    <span className={item.isAnonymous ? "blur-sm select-none bg-gray-200 text-transparent rounded px-1" : ""}>
+                                                        {item.donorName}
+                                                    </span>
+                                                </p>
+                                                <p className="flex items-center">
+                                                    <i className="fas fa-school mr-2 text-[#3498db] w-4"></i>
+                                                    <span className={item.isAnonymous ? "blur-sm select-none bg-gray-200 text-transparent rounded px-1" : ""}>
+                                                        {item.userClass || 'N/A'}
+                                                    </span>
+                                                </p>
+                                                <p><i className="fas fa-calendar mr-2 text-[#3498db] w-4"></i>{formattedDate} • {formattedTime}</p>
+                                            </div>
                                     </div>
                                 );
                             })}
@@ -2434,6 +2444,7 @@ const AdminChatLogWindow: React.FC<{userId: string}> = ({userId}) => {
 const QuickOfferModalContent: React.FC<{user: any, t: any, onComplete: () => void}> = ({user, t, onComplete}) => {
     const [item, setItem] = useState({ itemName: '', category: 'category_food', qty: 1, expiryDate: '' });
     const [posting, setPosting] = useState(false);
+    const [isAnonymous, setIsAnonymous] = useState(false);
 
     const handlePost = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -2460,7 +2471,8 @@ const QuickOfferModalContent: React.FC<{user: any, t: any, onComplete: () => voi
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
                 userId: user.uid, 
                 donorName: user.displayName || 'Donor',
-                userClass: user.userClass || 'N/A'
+                userClass: user.userClass || 'N/A',
+                isAnonymous: isAnonymous
             });
 
             const adminQuery = await db.collection('users').where('isAdmin', '==', true).get();
@@ -2468,7 +2480,7 @@ const QuickOfferModalContent: React.FC<{user: any, t: any, onComplete: () => voi
                 await db.collection('notifications').add({
                     userId: adminDoc.id,
                     title: `New Offer: ${item.itemName}`,
-                    message: `${user.displayName} from ${user.userClass || 'unknown class'} has offered an item.`,
+                    message: `${isAnonymous ? 'Anonymous' : user.displayName} from ${isAnonymous ? 'Hidden Class' : (user.userClass || 'unknown class')} has offered an item.`,
                     type: 'offer',
                     read: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2528,6 +2540,20 @@ const QuickOfferModalContent: React.FC<{user: any, t: any, onComplete: () => voi
                         />
                     </div>
                 )}
+                
+                <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border-2 border-dashed border-gray-200">
+                    <button 
+                        type="button"
+                        onClick={() => setIsAnonymous(!isAnonymous)}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${isAnonymous ? 'bg-[#3498db]' : 'bg-gray-300'}`}
+                    >
+                        <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${isAnonymous ? 'translate-x-6' : ''}`} />
+                    </button>
+                    <span className="text-xs font-black uppercase text-gray-500">
+                        {isAnonymous ? t('hide_identity') : t('show_identity')}
+                    </span>
+                </div>
+
                 <button type="submit" disabled={posting} className="w-full bg-[#3498db] text-white py-5 rounded-2xl font-black text-xl shadow-xl uppercase transition-transform active:scale-95">
                     {posting ? '...' : t('post_offer')}
                 </button>
