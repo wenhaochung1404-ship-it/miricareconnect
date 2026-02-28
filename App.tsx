@@ -306,7 +306,7 @@ Accumulated points can be used to redeem vouchers at the "Point Shop", subject t
 Important Notes:
 1. Donations must follow the scheduled time and location.
 2. Items that are damaged or unusable may not be approved.
-3. All approved items will be distributed to communities in need (Kampung Pangkalan) through our project team.
+3. All approved items will be distributed to communities in need (Kampung Pengkalan) through our project team.
 
 Miri Care Connect aims to encourage kindness, reduce waste, and support those in need through a transparent and meaningful donation system.`,
     ms: `Langkah 1: Daftar / Log Masuk
@@ -348,7 +348,7 @@ Mata terkumpul boleh digunakan untuk menebus baucar di "Kedai Mata", tertakluk k
 Nota Penting:
 1. Sumbangan mesti mengikut masa dan lokasi yang dijadualkan.
 2. Barang yang rosak atau tidak boleh digunakan mungkin tidak diluluskan.
-3. Semua barang yang diluluskan akan diagihkan kepada komuniti yang memerlukan (Kampung Pangkalan) melalui pasukan projek kami.
+3. Semua barang yang diluluskan akan diagihkan kepada komuniti yang memerlukan (Kampung Pengkalan) melalui pasukan projek kami.
 
 Miri Care Connect bertujuan untuk menggalakkan kebaikan, mengurangkan pembaziran, dan menyokong mereka yang memerlukan melalui sistem sumbangan yang telus dan bermakna.`,
     zh: `步骤 1：注册 / 登录
@@ -390,7 +390,7 @@ Miri Care Connect bertujuan untuk menggalakkan kebaikan, mengurangkan pembaziran
 重要提示：
 1. 捐赠必须遵守预定的时间和地点。
 2. 损坏或无法使用的物品可能不被批准。
-3. 所有获批的物品将通过我们的项目团队分发给有需要的社区（Kampung Pangkalan）。
+3. 所有获批的物品将通过我们的项目团队分发给有需要的社区（Kampung Pengkalan）。
 
 Miri Care Connect 旨在通过透明和有意义的捐赠系统鼓励善意，减少浪费并支持有需要的人。`,
     bi: `Langkah 1: Rejista / Log Masuk
@@ -432,7 +432,7 @@ Poin ti udah digumpul tau dikena nukar baucar ba "Kedai Poin", bepanggai ba stok
 Nota Penting:
 1. Pemeri mesti nitihka masa enggau endur ti dijadualka.
 2. Barang ti rusak tauka enda ulih dikena engka enda dikemendarka.
-3. Semua barang ti dikemendarka deka diagih ngagai komuniti ti begunaka bantu (Kampung Pangkalan) nengah tim projek kami.
+3. Semua barang ti dikemendarka deka diagih ngagai komuniti ti begunaka bantu (Kampung Pengkalan) nengah tim projek kami.
 
 Miri Care Connect bisi tuju deka ngansak penyiru, ngurangka pengerusak, enggau nyukung sida ti begunaka bantu nengah sistem pemeri ti telus enggau bermakna.`
 };
