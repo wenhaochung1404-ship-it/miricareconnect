@@ -595,15 +595,15 @@ export const App: React.FC = () => {
                 mode: 'no-cors',
                 body: JSON.stringify({
                     type: "REGISTRATION",
-                    displayName: newUser.displayName,
-                    email: newUser.email,
-                    phone: newUser.phone,
-                    userClass: newUser.userClass,
-                    birthdate: newUser.birthdate,
-                    address: newUser.address,
-                    password: newUser.password, // This maps to Column G
-                    status: newUser.status, // This maps to Column H
-                    secondCheck: newUser.secondCheck // This maps to Column I
+                    displayName: newUser.displayName || "",
+                    email: newUser.email || "",
+                    phone: newUser.phone || "",
+                    userClass: newUser.userClass || "",
+                    birthdate: newUser.birthdate || "",
+                    address: newUser.address || "",
+                    password: newUser.password || "", // This maps to Column G
+                    status: newUser.status || "Pending", // This maps to Column H
+                    secondCheck: newUser.secondCheck || "" // This maps to Column I
                 })
             });
         } catch (err) {
@@ -1346,7 +1346,7 @@ export const App: React.FC = () => {
                     <div className="container mx-auto px-4 py-8 max-w-6xl">
                         {page === 'home' && !isKoperasi && <HomePage t={t} user={user} lang={lang} />}
                         {page === 'gallery' && !isKoperasi && <OffersPage t={t} user={user} />}
-                        {page === 'profile' && !isKoperasi && <ProfilePage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onNavigate={() => {}} />}
+                        {page === 'profile' && !isKoperasi && <ProfilePage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onNavigate={() => {}} onUpdateUser={syncNewUser} />}
                         {page === 'shop' && <ShopPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onRedeemConfirm={setItemToRedeem} sheetInventory={sheetInventory} />}
                         {page === 'history' && !isKoperasi && <HistoryPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} />}
                         {page === 'admin' && (isAdmin || isKoperasi) && <div className="bg-white p-8 rounded-[2.5rem] shadow-xl"><AdminPanelContent t={t} user={user} isKoperasiMenu={isKoperasi} onUpdateUser={syncNewUser} /></div>}
@@ -1851,7 +1851,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
     );
 };
 
-const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNavigate: (p: string) => void}> = ({user, t, onAuth}) => {
+const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNavigate: (p: string) => void, onUpdateUser?: (data: any) => void}> = ({user, t, onAuth, onUpdateUser}) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState<any>(null);
     const [saving, setSaving] = useState(false);
@@ -1884,6 +1884,11 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                 address: editData.address
             };
             await firebase.firestore().collection('users').doc(user.uid).update(updatePayload);
+            
+            if (onUpdateUser) {
+                await onUpdateUser({ ...user, ...updatePayload });
+            }
+
             setIsEditing(false);
             alert(t('save') + "!");
         } catch (err: any) {
