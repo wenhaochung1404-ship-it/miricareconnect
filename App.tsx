@@ -1649,6 +1649,18 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                     await firebase.auth().signOut();
                     throw new Error("Verification email sent! Please check your moe email spam folder page.");
                 }
+
+                // Check and update secondCheck if verified
+                const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    if (!userData.secondCheck || userData.secondCheck === '') {
+                        const updatedData = { ...userData, secondCheck: '(verified)' };
+                        await firebase.firestore().collection('users').doc(user.uid).update({ secondCheck: '(verified)' });
+                        await onRegisterSuccess(updatedData);
+                    }
+                }
+
                 onClose();
             } else if (currentMode === 'register') {
                 if (!dataInput.email.toLowerCase().endsWith("@moe-dl.edu.my") && dataInput.email !== 'admin@gmail.com' && dataInput.email !== 'koperasi@gmail.com') {
@@ -1665,7 +1677,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
                         password: dataInput.password,
                         status: 'Pending',
-                        secondCheck: 'Pending'
+                        secondCheck: ''
                     };
                     await firebase.firestore().collection('users').doc(user.uid).set(userData);
                     await onRegisterSuccess(userData);
