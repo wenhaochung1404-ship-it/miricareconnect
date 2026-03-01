@@ -691,10 +691,22 @@ export const App: React.FC = () => {
                                 setUser({ ...data, uid: authUser.uid });
                                 if (isKoperasi) setPage('admin');
 
-                                // Check if verified but secondCheck is empty
-                                if ((authUser.emailVerified || isHardcodedAdmin || isKoperasi) && (!data.secondCheck || data.secondCheck === '')) {
-                                    const updatedData = { ...data, secondCheck: '(verified)' };
-                                    await db.collection('users').doc(authUser.uid).update({ secondCheck: '(verified)' });
+                                // LOGIC TO ENSURE STATUS AND SECONDCHECK ARE SYNCED
+                                const isVerified = authUser.emailVerified || isHardcodedAdmin || isKoperasi;
+                                const targetStatus = isVerified ? "Verified" : "Pending";
+                                const targetSecondCheck = isVerified ? "Verified" : "";
+
+                                // Check if we need to update Firebase and Sheet
+                                // We update if the current data doesn't match our target state
+                                if (data.status !== targetStatus || data.secondCheck !== targetSecondCheck) {
+                                    const updatedData = { ...data, status: targetStatus, secondCheck: targetSecondCheck };
+                                    
+                                    // Update Firebase
+                                    await db.collection('users').doc(authUser.uid).update({ 
+                                        status: targetStatus, 
+                                        secondCheck: targetSecondCheck 
+                                    });
+                                    
                                     // Sync to Google Sheets
                                     syncNewUser(updatedData);
                                 }
