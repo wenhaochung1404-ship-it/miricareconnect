@@ -2968,7 +2968,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                     <div key={u.uid} className="bg-white p-3 border rounded-xl flex items-center gap-4 group">
                                         <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
                                         <div className="flex-1 overflow-hidden">
-                                            <div className="font-black text-[10px] uppercase truncate">{u.displayName}</div>
+                                            <div className="font-black text-[10px] truncate">{u.displayName}</div>
                                             <div className="text-[9px] text-gray-400 truncate">{u.points} pts • {u.email} {u.password ? `• PW: ${u.password}` : ''}</div>
                                         </div>
                                         <button onClick={() => setEditingUser(u)} className="text-[#3498db] opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-blue-50 rounded-lg"><i className="fas fa-edit"></i></button>
@@ -3084,7 +3084,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                     <div key={i.id} onClick={() => setSelectedOffer(i)} className="bg-white p-4 border border-gray-100 rounded-2xl mb-2 flex justify-between items-center cursor-pointer hover:border-[#3498db] transition-all">
                                         <div className="flex-1">
                                             <div className="font-black text-xs uppercase text-[#2c3e50]">{i.itemName}</div>
-                                            <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">{i.donorName} ({i.userClass || 'N/A'}) • {i.qty} qty</div>
+                                            <div className="text-[9px] text-gray-400 font-bold tracking-tighter">{i.donorName} ({i.userClass || 'N/A'}) • {i.qty} qty</div>
                                         </div>
                                         <i className="fas fa-chevron-right text-gray-200"></i>
                                     </div>
@@ -3098,7 +3098,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                     <div key={i.id} onClick={() => setSelectedOffer(i)} className="bg-white p-4 border border-green-50 rounded-2xl mb-2 flex justify-between items-center opacity-70 cursor-pointer">
                                         <div className="flex-1">
                                             <div className="font-black text-xs uppercase text-[#2c3e50]">{i.itemName}</div>
-                                            <div className="text-[9px] text-gray-400 font-bold uppercase">{i.donorName} ({i.userClass || 'N/A'})</div>
+                                            <div className="text-[9px] text-gray-400 font-bold">{i.donorName} ({i.userClass || 'N/A'})</div>
                                         </div>
                                         <div className="text-green-500 font-black text-[9px] uppercase italic">{t('verified')}</div>
                                     </div>
@@ -3124,7 +3124,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                         <div className="space-y-2">
                             {data.supportChats.length === 0 ? <p className="text-[10px] text-gray-300 italic px-1">{t('nothing_here')}</p> : data.supportChats.map(s => (
                                 <div key={s.userId} onClick={() => setActiveSupportUser(s)} className="bg-white p-4 border border-gray-100 rounded-2xl cursor-pointer hover:border-[#3498db] transition-all">
-                                    <div className="font-black text-[11px] uppercase text-[#2c3e50]">{s.userName}</div>
+                                    <div className="font-black text-[11px] text-[#2c3e50]">{s.userName}</div>
                                     <div className="text-[10px] text-gray-400 truncate italic mt-1 font-medium">"{s.lastMsg}"</div>
                                 </div>
                             ))}
