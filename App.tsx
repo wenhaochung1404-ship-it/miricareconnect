@@ -1883,7 +1883,8 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                 displayName: user.displayName || '',
                 userClass: user.userClass || '',
                 phone: user.phone || '',
-                birthdate: user.birthdate || ''
+                birthdate: user.birthdate || '',
+                email: user.email || ''
             });
         }
     }, [user, isEditing]);
@@ -1894,11 +1895,39 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
         if (!editData || !user || typeof firebase === 'undefined' || !firebase.firestore) return;
         setSaving(true);
         try {
+            // Check if email changed
+            if (editData.email !== user.email) {
+                // Validate email
+                if (!editData.email.toLowerCase().endsWith("@moe-dl.edu.my") && editData.email !== 'admin@gmail.com' && editData.email !== 'koperasi@gmail.com') {
+                     alert(t('moe_email_alert'));
+                     setSaving(false);
+                     return;
+                }
+                
+                // Try to update Firebase Auth email
+                const currentUser = firebase.auth().currentUser;
+                if (currentUser) {
+                    try {
+                        await currentUser.updateEmail(editData.email);
+                        await currentUser.sendEmailVerification();
+                        alert("Email updated in authentication. A verification email has been sent to your new address. Please verify it to keep your account active.");
+                    } catch (authErr: any) {
+                        if (authErr.code === 'auth/requires-recent-login') {
+                            alert("For security reasons, changing your email requires a recent login. Please logout and login again, then try updating your email.");
+                            setSaving(false);
+                            return;
+                        }
+                        throw authErr;
+                    }
+                }
+            }
+
             const updatePayload = {
                 displayName: editData.displayName,
                 userClass: editData.userClass,
                 phone: editData.phone,
-                birthdate: editData.birthdate
+                birthdate: editData.birthdate,
+                email: editData.email
             };
             await firebase.firestore().collection('users').doc(user.uid).update(updatePayload);
             
@@ -1983,33 +2012,50 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
             <div className="bg-white p-8 rounded-[2rem] border shadow-sm space-y-6 relative group border-gray-100">
                 <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50 pb-3">{t('personal_info')}</h3>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-4">
                     <div className="space-y-1">
-                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('phone_number')}</label>
+                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('email_address')}</label>
                         {isEditing ? (
                             <input 
-                                value={editData.phone} 
-                                onChange={e => setEditData({...editData, phone: e.target.value})}
-                                placeholder="(6012-345-6789)"
+                                type="email"
+                                value={editData.email} 
+                                onChange={e => setEditData({...editData, email: e.target.value})}
+                                placeholder="m-xxxxxxxx@moe-dl.edu.my"
                                 className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
                             />
                         ) : (
-                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.phone || t('not_set')}</p>
+                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.email || t('not_set')}</p>
                         )}
                     </div>
-                    
-                    <div className="space-y-1">
-                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('birthdate')}</label>
-                        {isEditing ? (
-                            <input 
-                                type="date"
-                                value={editData.birthdate} 
-                                onChange={e => setEditData({...editData, birthdate: e.target.value})}
-                                className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
-                            />
-                        ) : (
-                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.birthdate || t('not_set')}</p>
-                        )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('phone_number')}</label>
+                            {isEditing ? (
+                                <input 
+                                    value={editData.phone} 
+                                    onChange={e => setEditData({...editData, phone: e.target.value})}
+                                    placeholder="(6012-345-6789)"
+                                    className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
+                                />
+                            ) : (
+                                <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.phone || t('not_set')}</p>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('birthdate')}</label>
+                            {isEditing ? (
+                                <input 
+                                    type="date"
+                                    value={editData.birthdate} 
+                                    onChange={e => setEditData({...editData, birthdate: e.target.value})}
+                                    className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
+                                />
+                            ) : (
+                                <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.birthdate || t('not_set')}</p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -2759,6 +2805,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
         try {
             await firebase.firestore().collection('users').doc(editingUser.uid).update({
                 displayName: editingUser.displayName,
+                email: editingUser.email || '',
                 points: Number(editingUser.points),
                 phone: editingUser.phone || '',
                 address: editingUser.address || '',
@@ -2934,6 +2981,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                         {editingUser ? (
                             <form onSubmit={handleUpdateUser} className="bg-gray-50 p-4 rounded-2xl border space-y-3">
                                 <AdminInput label={t('full_name')} value={editingUser.displayName} onChange={v => setEditingUser({...editingUser, displayName: v})} />
+                                <AdminInput label={t('email_address')} value={editingUser.email} onChange={v => setEditingUser({...editingUser, email: v})} />
                                 <AdminInput label={t('points')} type="number" value={editingUser.points} onChange={v => setEditingUser({...editingUser, points: v})} />
                                 <AdminInput label={t('phone_number')} value={editingUser.phone} onChange={v => setEditingUser({...editingUser, phone: v})} />
                                 <AdminInput label={t('home_address')} value={editingUser.address} onChange={v => setEditingUser({...editingUser, address: v})} />
@@ -2950,14 +2998,31 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                         ) : (
                             <>
                                 <input placeholder={t('search_placeholder')} className="w-full bg-gray-50 border p-3 rounded-xl text-xs font-bold outline-none" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                                <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-[8px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
+                                    <div className="col-span-1">#</div>
+                                    <div className="col-span-3">{t('full_name')}</div>
+                                    <div className="col-span-4">{t('email_address')}</div>
+                                    <div className="col-span-2">{t('points')}</div>
+                                    <div className="col-span-2 text-right">Action</div>
+                                </div>
                                 {filteredUsers.map((u, index) => (
-                                    <div key={u.uid} className="bg-white p-3 border rounded-xl flex items-center gap-4 group">
-                                        <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
-                                        <div className="flex-1 overflow-hidden">
+                                    <div key={u.uid} className="bg-white p-3 border rounded-xl flex flex-col sm:grid sm:grid-cols-12 items-center gap-2 sm:gap-4 group hover:border-[#3498db] transition-all">
+                                        <div className="hidden sm:flex col-span-1 w-8 h-8 items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
+                                        <div className="col-span-11 sm:col-span-3 overflow-hidden w-full">
                                             <div className="font-black text-[10px] truncate">{u.displayName}</div>
-                                            <div className="text-[9px] text-gray-400 truncate">{u.points} pts • {u.email} {u.password ? `• PW: ${u.password}` : ''}</div>
+                                            <div className="sm:hidden text-[9px] text-gray-400 truncate">{u.email}</div>
                                         </div>
-                                        <button onClick={() => setEditingUser(u)} className="text-[#3498db] opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-blue-50 rounded-lg"><i className="fas fa-edit"></i></button>
+                                        <div className="hidden sm:block col-span-4 text-[9px] text-gray-500 font-bold truncate">
+                                            {u.email}
+                                        </div>
+                                        <div className="col-span-2 text-[9px] font-black text-[#f39c12]">
+                                            {u.points} <span className="text-[7px] uppercase">pts</span>
+                                        </div>
+                                        <div className="col-span-2 text-right w-full">
+                                            <button onClick={() => setEditingUser(u)} className="text-[#3498db] sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-blue-50 rounded-lg">
+                                                <i className="fas fa-edit"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </>
