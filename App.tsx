@@ -1883,8 +1883,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                 displayName: user.displayName || '',
                 userClass: user.userClass || '',
                 phone: user.phone || '',
-                birthdate: user.birthdate || '',
-                address: user.address || ''
+                birthdate: user.birthdate || ''
             });
         }
     }, [user, isEditing]);
@@ -1899,8 +1898,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                 displayName: editData.displayName,
                 userClass: editData.userClass,
                 phone: editData.phone,
-                birthdate: editData.birthdate,
-                address: editData.address
+                birthdate: editData.birthdate
             };
             await firebase.firestore().collection('users').doc(user.uid).update(updatePayload);
             
@@ -1946,22 +1944,22 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                             value={editData.displayName} 
                             onChange={e => setEditData({...editData, displayName: e.target.value})}
                             placeholder={t('full_name')}
-                            className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black uppercase text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
+                            className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
                         />
                         <input 
                             value={editData.userClass} 
                             onChange={e => setEditData({...editData, userClass: e.target.value})}
                             placeholder={t('class_label')}
-                            className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black uppercase text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
+                            className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
                         />
                     </div>
                 ) : (
                     <>
-                        <h1 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">{user.displayName || 'Guest'}</h1>
+                        <h1 className="text-2xl font-black italic mb-2 tracking-tighter">{user.displayName || 'Guest'}</h1>
                         <p className="text-[#f39c12] font-black text-xl flex items-center justify-center gap-2">
                             <i className="fas fa-star"></i> {user.points} {t('points')}
                         </p>
-                        {user.userClass && <p className="text-xs font-bold uppercase tracking-widest text-white/60 mt-2">{user.userClass}</p>}
+                        {user.userClass && <p className="text-xs font-bold tracking-widest text-white/60 mt-2">{user.userClass}</p>}
                     </>
                 )}
                 
@@ -2010,19 +2008,6 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                             />
                         ) : (
                             <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.birthdate || t('not_set')}</p>
-                        )}
-                    </div>
-
-                    <div className="col-span-1 sm:col-span-2 space-y-1">
-                        <label className="text-[8px] font-black uppercase text-gray-400 tracking-widest ml-1">{t('home_address')}</label>
-                        {isEditing ? (
-                            <textarea 
-                                value={editData.address} 
-                                onChange={e => setEditData({...editData, address: e.target.value})}
-                                className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db] min-h-[80px]"
-                            />
-                        ) : (
-                            <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.address || t('not_set')}</p>
                         )}
                     </div>
                 </div>
