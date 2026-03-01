@@ -33,6 +33,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "email_address": "Email Address",
         "password": "Password",
         "full_name": "Full Name",
+        "full_name_ic": "FULL NAME FOLLOW IC",
         "phone_number": "Phone Number",
         "home_address": "Home Address",
         "class_label": "Class / Section",
@@ -117,7 +118,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "Confirm giving {pts} points to {user}?",
         "points_limit_msg": "you can only redeem 200 points of items in this month , please try to redeem next month",
         "shop_closed_msg": "the points shop is currently close , it will reopen on every month 1st day",
-        "shop_open_warning": "the points shop will open until 21st only , please redeem as fast as possible , you can only redeem items from 1st to 21st of the month , the items can only be used started from 22nd of the month until the end of the month",
+        "shop_open_warning": "the points shop will open until 21st only , please redeem as fast as possible , you can redeem voucher in the point shop from 1st to 21st of the month, but the items still cannot be redeem at koperasi yet . The items can only be redeem at koperasi started from 22nd of the month until the end of the month",
         "select_item_to_redeem": "Select Item to Redeem",
         "choose_available_item": "-- Choose an available item --",
         "redeem_wait_msg": "Please wait after you click, it will be delay sometime",
@@ -157,7 +158,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "processing": "Processing...",
         "status_col_h": "Status (Col H)",
         "second_check_col_i": "2nd Check (Col I)",
-        "verification_sent_alert": "Verification message sent, please check your moe email spam folder page"
+        "verification_sent_alert": "Verification message sent, please check your moe email spam folder page",
+        "login_required_shop": "Please login to access Points Shop"
     },
     [Language.BM]: {
         "menu": "Menu",
@@ -190,6 +192,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "email_address": "Alamat Emel",
         "password": "Kata Laluan",
         "full_name": "Nama Penuh",
+        "full_name_ic": "NAMA PENUH IKUT IC",
         "phone_number": "Nombor Telefon",
         "home_address": "Alamat Rumah",
         "class_label": "Kelas / Bahagian",
@@ -274,7 +277,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "Sahkan pemberian {pts} mata kepada {user}?",
         "points_limit_msg": "anda hanya boleh menebus 200 mata barangan dalam bulan ini , sila cuba menebus bulan depan",
         "shop_closed_msg": "kedai mata kini ditutup , ia akan dibuka semula pada hari pertama setiap bulan",
-        "shop_open_warning": "kedai mata akan dibuka sehingga 21 haribulan sahaja , sila tebus secepat mungkin , anda hanya boleh menebus barangan dari 1 hingga 21 haribulan , barangan hanya boleh digunakan bermula dari 22 haribulan sehingga akhir bulan",
+        "shop_open_warning": "kedai mata akan dibuka sehingga 21 haribulan sahaja, sila tebus secepat mungkin, anda boleh menebus baucar di kedai mata dari 1 hingga 21 haribulan, tetapi barangan masih belum boleh ditebus di koperasi. Barangan hanya boleh ditebus di koperasi bermula dari 22 haribulan sehingga akhir bulan",
         "select_item_to_redeem": "Pilih Barang untuk Ditebus",
         "choose_available_item": "-- Pilih barang yang tersedia --",
         "redeem_wait_msg": "Sila tunggu selepas anda klik, ia akan mengambil sedikit masa",
@@ -314,7 +317,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "processing": "Sedang memproses...",
         "status_col_h": "Status (Kol H)",
         "second_check_col_i": "Semakan Ke-2 (Kol I)",
-        "verification_sent_alert": "Mesej pengesahan dihantar, sila semak halaman folder spam emel moe anda"
+        "verification_sent_alert": "Mesej pengesahan dihantar, sila semak halaman folder spam emel moe anda",
+        "login_required_shop": "Sila log masuk untuk mengakses Kedai Mata"
     },
     [Language.BC]: {
         "menu": "菜单",
@@ -347,6 +351,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "email_address": "电子邮箱",
         "password": "密码",
         "full_name": "全名",
+        "full_name_ic": "全名（跟IC）",
         "phone_number": "电话号码",
         "home_address": "家庭住址",
         "class_label": "班级 / 组别",
@@ -431,7 +436,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "确认向 {user} 发放 {pts} 积分吗？",
         "points_limit_msg": "您本月只能兑换总值200积分的物品，请下个月再试",
         "shop_closed_msg": "积分商店目前已关闭，将于每月1号重新开放",
-        "shop_open_warning": "积分商店仅开放至21号，请尽快兑换，您只能在每月1号至21号期间兑换物品，兑换的物品仅限在每月22号至月底期间使用",
+        "shop_open_warning": "积分商店仅开放至21号，请尽快兑换，您可以在每月1号至21号期间在积分商店兑换代金券，但目前还不能在合作社兑换物品。物品只能在每月22号至月底期间在合作社兑换",
         "select_item_to_redeem": "选择要兑换的物品",
         "choose_available_item": "-- 选择可用物品 --",
         "redeem_wait_msg": "点击后请稍等，处理过程可能需要一些时间",
@@ -471,7 +476,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "processing": "处理中...",
         "status_col_h": "状态 (H列)",
         "second_check_col_i": "第二次检查 (I列)",
-        "verification_sent_alert": "验证消息已发送，请检查您的 moe 电子邮件垃圾邮件文件夹页面"
+        "verification_sent_alert": "验证消息已发送，请检查您的 moe 电子邮件垃圾邮件文件夹页面",
+        "login_required_shop": "请登录以访问积分商店"
     },
     [Language.BI]: {
         "menu": "Menu",
@@ -504,6 +510,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "email_address": "Alamat Emel",
         "password": "Kata Laluan",
         "full_name": "Nama Penuh",
+        "full_name_ic": "NAMA PENUH NITIH IC",
         "phone_number": "Lumur Talipun",
         "home_address": "Alamat Rumah",
         "class_label": "Kelas / Bagi",
@@ -588,7 +595,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "points_award_confirm": "Tentu ka meri {pts} mata ngagai {user}?",
         "points_limit_msg": "nuan semina ulih nebus 200 mata barang dalam bulan tu , tulung uji nebus baru bulan dudi",
         "shop_closed_msg": "kedai mata benung ditutup diatu , iya deka dibuka baru ba hari keterubah ninting bulan",
-        "shop_open_warning": "kedai mata semina dibuka nyentuk 21 haribulan aja , tulung tebus jampat , nuan semina ulih nebus barang ari 1 nyentuk 21 haribulan , barang nya semina ulih dikena berengkah ari 22 haribulan nyentuk ujung bulan",
+        "shop_open_warning": "kedai mata deka dibuka nyentuk 21 haribulan aja, tulung tebus jampat, nuan ulih nebus baucar ba kedai mata ari 1 nyentuk 21 haribulan, tang barang bedau ulih ditebus ba koperasi. Barang semina ulih ditebus ba koperasi berengkah ari 22 haribulan nyentuk ujung bulan",
         "select_item_to_redeem": "Pilih Barang deka Ditebus",
         "choose_available_item": "-- Pilih barang ti bisi --",
         "redeem_wait_msg": "Tulung nganti pengudah nuan klik, iya deka begunaka mimit awak",
@@ -628,6 +635,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "processing": "Benung memproses...",
         "status_col_h": "Status (Kol H)",
         "second_check_col_i": "Periksa Ke-2 (Kol I)",
-        "verification_sent_alert": "Pesan pengesahan udah dikirim, tulung periksa laman folder spam emel moe nuan"
+        "verification_sent_alert": "Pesan pengesahan udah dikirim, tulung periksa laman folder spam emel moe nuan",
+        "login_required_shop": "Tulung log masuk ngambika ulih ngakses Kedai Mata"
     }
 };

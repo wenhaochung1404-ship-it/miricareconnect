@@ -1807,12 +1807,12 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                             <>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('full_name')}</label>
-                                        <input placeholder="Name" value={data.name} onChange={e => setData({...data, name: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('full_name_ic')}</label>
+                                        <input placeholder="(Issac Newton)" value={data.name} onChange={e => setData({...data, name: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('class_label')}</label>
-                                        <input placeholder="Class" value={data.userClass} onChange={e => setData({...data, userClass: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                        <input placeholder="(5 Einstein)" value={data.userClass} onChange={e => setData({...data, userClass: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -1824,10 +1824,6 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Phone</label>
                                         <input type="tel" placeholder="Phone" value={data.phone} onChange={e => setData({...data, phone: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
                                     </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('home_address')}</label>
-                                    <input placeholder="Address" value={data.address} onChange={e => setData({...data, address: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
                                 </div>
                             </>
                         )}
@@ -2111,6 +2107,22 @@ const ShopPage: React.FC<{user: any, t: any, onAuth: () => void, onRedeemConfirm
     };
 
     if (loading) return <div className="text-center py-20 font-black uppercase text-gray-300">Checking Inventory...</div>;
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border-4 border-dashed border-gray-100 px-8 text-center animate-in fade-in zoom-in duration-500 shop-page-container">
+                <div className="w-24 h-24 bg-blue-50 text-[#3498db] rounded-full flex items-center justify-center text-4xl mb-6">
+                    <i className="fas fa-lock"></i>
+                </div>
+                <h2 className="text-2xl font-black text-[#2c3e50] uppercase italic tracking-tighter mb-4 leading-tight">
+                    {t('login_required_shop')}
+                </h2>
+                <button onClick={onAuth} className="bg-[#3498db] hover:bg-blue-600 text-white px-8 py-3 rounded-full font-black text-xs uppercase shadow-lg transition-all active:scale-95">
+                    {t('login')}
+                </button>
+            </div>
+        );
+    }
 
     if (!isShopOpen && !isAdmin) {
         return (
