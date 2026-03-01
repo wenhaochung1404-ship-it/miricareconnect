@@ -1822,7 +1822,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Phone</label>
-                                        <input type="tel" placeholder="Phone" value={data.phone} onChange={e => setData({...data, phone: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                        <input type="tel" placeholder="(6012-345-6789)" value={data.phone} onChange={e => setData({...data, phone: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
                                     </div>
                                 </div>
                             </>
@@ -1990,6 +1990,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                             <input 
                                 value={editData.phone} 
                                 onChange={e => setEditData({...editData, phone: e.target.value})}
+                                placeholder="(6012-345-6789)"
                                 className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
                             />
                         ) : (
