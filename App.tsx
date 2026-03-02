@@ -1684,6 +1684,13 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
 
                 onClose();
             } else if (currentMode === 'register') {
+                // Validate all fields are filled
+                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !dataInput.userClass || !dataInput.address) {
+                    const msg = t('fill_all_fields');
+                    alert(msg);
+                    throw new Error(msg);
+                }
+
                 if (!dataInput.email.toLowerCase().endsWith("@moe-dl.edu.my") && dataInput.email !== 'admin@gmail.com' && dataInput.email !== 'koperasi@gmail.com') {
                     const msg = t('moe_email_alert');
                     alert(msg);
@@ -2999,21 +3006,16 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                             <>
                                 <input placeholder={t('search_placeholder')} className="w-full bg-gray-50 border p-3 rounded-xl text-xs font-bold outline-none" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                                 <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-[8px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
-                                    <div className="col-span-1">#</div>
-                                    <div className="col-span-3">{t('full_name')}</div>
-                                    <div className="col-span-4">{t('email_address')}</div>
+                                    <div className="col-span-2">#</div>
+                                    <div className="col-span-6">{t('full_name')}</div>
                                     <div className="col-span-2">{t('points')}</div>
                                     <div className="col-span-2 text-right">Action</div>
                                 </div>
                                 {filteredUsers.map((u, index) => (
                                     <div key={u.uid} className="bg-white p-3 border rounded-xl flex flex-col sm:grid sm:grid-cols-12 items-center gap-2 sm:gap-4 group hover:border-[#3498db] transition-all">
-                                        <div className="hidden sm:flex col-span-1 w-8 h-8 items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
-                                        <div className="col-span-11 sm:col-span-3 overflow-hidden w-full">
+                                        <div className="hidden sm:flex col-span-2 w-8 h-8 items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
+                                        <div className="col-span-11 sm:col-span-6 overflow-hidden w-full">
                                             <div className="font-black text-[10px] truncate">{u.displayName}</div>
-                                            <div className="sm:hidden text-[9px] text-gray-400 truncate">{u.email}</div>
-                                        </div>
-                                        <div className="hidden sm:block col-span-4 text-[9px] text-gray-500 font-bold truncate">
-                                            {u.email}
                                         </div>
                                         <div className="col-span-2 text-[9px] font-black text-[#f39c12]">
                                             {u.points} <span className="text-[7px] uppercase">pts</span>
