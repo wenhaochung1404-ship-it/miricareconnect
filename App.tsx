@@ -602,8 +602,8 @@ export const App: React.FC = () => {
                     birthdate: newUser.birthdate || "",
                     address: newUser.address || "",
                     password: newUser.password || "", // This maps to Column G
-                    status: newUser.status || "Pending", // This maps to Column H
-                    secondCheck: newUser.secondCheck || "" // This maps to Column I
+                    status: newUser.status || "Verified", // This maps to Column H
+                    secondCheck: newUser.secondCheck || "(verified)" // This maps to Column I
                 })
             });
         } catch (err) {
@@ -682,8 +682,7 @@ export const App: React.FC = () => {
                     if (authUser) {
                         const isHardcodedAdmin = authUser.email === 'admin@gmail.com';
                         const isKoperasi = authUser.email === 'koperasi@gmail.com';
-                        await authUser.reload();
-                        setEmailVerified(!!authUser.emailVerified || isHardcodedAdmin || isKoperasi);
+                        setEmailVerified(true);
                         
                         db.collection('users').doc(authUser.uid).onSnapshot(async (doc: any) => {
                             if (doc.exists) {
@@ -692,9 +691,8 @@ export const App: React.FC = () => {
                                 if (isKoperasi) setPage('admin');
 
                                 // LOGIC TO ENSURE STATUS AND SECONDCHECK ARE SYNCED
-                                const isVerified = authUser.emailVerified || isHardcodedAdmin || isKoperasi;
-                                const targetStatus = isVerified ? "Verified" : "Pending";
-                                const targetSecondCheck = isVerified ? "Verified" : "";
+                                const targetStatus = "Verified";
+                                const targetSecondCheck = "(verified)";
 
                                 // Check if we need to update Firebase and Sheet
                                 // We update if the current data doesn't match our target state
@@ -1267,14 +1265,6 @@ export const App: React.FC = () => {
                 </div>
             </header>
 
-            {!emailVerified && user && (
-                <div className="bg-amber-500 text-white p-2 text-center text-[10px] font-black uppercase tracking-widest animate-pulse">
-                    {t('check_spam_folder')}
-                    <button onClick={resendVerification} className="ml-4 underline hover:text-black">{t('update')}</button>
-                    <button onClick={() => window.location.reload()} className="ml-4 underline hover:text-black">{t('i_have_verified')}</button>
-                </div>
-            )}
-
             <div className="flex flex-1 overflow-hidden relative">
                 <div className="fixed right-6 bottom-6 z-[200] flex items-center gap-3">
                     {showSupportChat && !isAdmin && !isKoperasi && (
@@ -1297,8 +1287,7 @@ export const App: React.FC = () => {
                             <button 
                                 onClick={(e) => { 
                                     e.stopPropagation(); 
-                                    if(emailVerified) setIsQuickOfferOpen(true);
-                                    else alert(t('check_email_verify'));
+                                    setIsQuickOfferOpen(true);
                                 }}
                                 className="bg-[#2ecc71] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-gray-50"
                                 title={t('quick_offer')}
@@ -1662,22 +1651,14 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
         try {
             if (currentMode === 'login') {
                 const { user } = await firebase.auth().signInWithEmailAndPassword(dataInput.email, dataInput.password);
-                const isHardcodedAdmin = dataInput.email === 'admin@gmail.com';
-                const isKoperasi = dataInput.email === 'koperasi@gmail.com';
                 
-                if (!user.emailVerified && !isHardcodedAdmin && !isKoperasi) {
-                    await user.sendEmailVerification();
-                    await firebase.auth().signOut();
-                    throw new Error(t('verification_sent_alert'));
-                }
-
                 // Check and update secondCheck if verified
                 const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     if (!userData.secondCheck || userData.secondCheck === '') {
-                        const updatedData = { ...userData, secondCheck: '(verified)' };
-                        await firebase.firestore().collection('users').doc(user.uid).update({ secondCheck: '(verified)' });
+                        const updatedData = { ...userData, status: 'Verified', secondCheck: '(verified)' };
+                        await firebase.firestore().collection('users').doc(user.uid).update({ status: 'Verified', secondCheck: '(verified)' });
                         await onRegisterSuccess(updatedData);
                     }
                 }
@@ -1699,20 +1680,19 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 const {user} = await firebase.auth().createUserWithEmailAndPassword(dataInput.email, dataInput.password);
                 
                 if (user) {
-                    await user.sendEmailVerification();
                     const userData = { 
                         email: dataInput.email, displayName: dataInput.name, points: 5, birthdate: dataInput.birthdate, 
                         phone: dataInput.phone, address: dataInput.address, userClass: dataInput.userClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
                         password: dataInput.password,
-                        status: 'Pending',
-                        secondCheck: ''
+                        status: 'Verified',
+                        secondCheck: '(verified)'
                     };
                     await firebase.firestore().collection('users').doc(user.uid).set(userData);
                     await onRegisterSuccess(userData);
                     // Do not sign out, keep user logged in to redirect to home
-                    alert(t('verification_sent_alert'));
+                    alert(t('register_success'));
                     onClose();
                 }
             }

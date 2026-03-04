@@ -160,7 +160,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "second_check_col_i": "2nd Check (Col I)",
         "verification_sent_alert": "Verification message sent, please check your moe email spam folder page",
         "login_required_shop": "Please login to access Points Shop",
-        "fill_all_fields": "PLEASE FILL IN ALL COLUMN"
+        "fill_all_fields": "PLEASE FILL IN ALL COLUMN",
+        "register_success": "YOU HAD SUCCESSFUL REGISTERED"
     },
     [Language.BM]: {
         "menu": "Menu",
@@ -320,7 +321,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "second_check_col_i": "Semakan Ke-2 (Kol I)",
         "verification_sent_alert": "Mesej pengesahan dihantar, sila semak halaman folder spam emel moe anda",
         "login_required_shop": "Sila log masuk untuk mengakses Kedai Mata",
-        "fill_all_fields": "SILA ISI SEMUA RUANGAN"
+        "fill_all_fields": "SILA ISI SEMUA RUANGAN",
+        "register_success": "ANDA TELAH BERJAYA MENDAFTAR"
     },
     [Language.BC]: {
         "menu": "菜单",
@@ -480,7 +482,8 @@ export const translations: Record<Language, Record<string, string>> = {
         "second_check_col_i": "第二次检查 (I列)",
         "verification_sent_alert": "验证消息已发送，请检查您的 moe 电子邮件垃圾邮件文件夹页面",
         "login_required_shop": "请登录以访问积分商店",
-        "fill_all_fields": "请填写所有栏目"
+        "fill_all_fields": "请填写所有栏目",
+        "register_success": "您已成功注册"
     },
     [Language.BI]: {
         "menu": "Menu",
@@ -640,6 +643,7 @@ export const translations: Record<Language, Record<string, string>> = {
         "second_check_col_i": "Periksa Ke-2 (Kol I)",
         "verification_sent_alert": "Pesan pengesahan udah dikirim, tulung periksa laman folder spam emel moe nuan",
         "login_required_shop": "Tulung log masuk ngambika ulih ngakses Kedai Mata",
-        "fill_all_fields": "TULUNG ISI SEMUA RUANGAN"
+        "fill_all_fields": "TULUNG ISI SEMUA RUANGAN",
+        "register_success": "NUAN UDAH MUJUR DAFTAR"
     }
 };
