@@ -1020,7 +1020,7 @@ export const App: React.FC = () => {
                     </h1>
                     <div className="max-w-md bg-orange-50 border-4 border-orange-100 p-8 rounded-[3rem] shadow-2xl animate-in zoom-in duration-500">
                         <p className="text-sm font-black uppercase text-orange-600 leading-relaxed italic">
-                            THIS WEBSITE IS CURRENTLY OFF , PLEASE STAY TUNED FOR THE MAINTENANCE , YOU CAN ASK QUESTION THROUGHT SUPPORT CHAT AT BOTTOM RIGHT
+                            THIS WEBSITE IS CURRENTLY OFF , PLEASE STAY TUNED FOR THE MAINTENANCE , YOU CAN ASK QUESTION THROUGH SUPPORT CHAT AT BOTTOM RIGHT
                         </p>
                     </div>
                 </div>
