@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { Language, UserProfile } from './types';
 import { translations } from './translations';
 import { GoogleGenAI } from "@google/genai";
@@ -536,6 +537,9 @@ export const App: React.FC = () => {
     const [isQuickOfferOpen, setIsQuickOfferOpen] = useState(false);
     const [emailVerified, setEmailVerified] = useState(true);
     const [redeemSuccessCode, setRedeemSuccessCode] = useState<string | null>(null);
+    const [announcement, setAnnouncement] = useState<any>(null);
+    const [showAnnouncement, setShowAnnouncement] = useState(false);
+    const [hasSeenAnnouncement, setHasSeenAnnouncement] = useState(false);
     
     // --- GOOGLE SHEETS INTEGRATION ---
     const [sheetInventory, setSheetInventory] = useState<string[]>([]);
@@ -677,6 +681,12 @@ export const App: React.FC = () => {
                     }
                 });
 
+                db.collection('settings').doc('announcement').onSnapshot((doc: any) => {
+                    if (doc.exists) {
+                        setAnnouncement(doc.data());
+                    }
+                });
+
                 unsubscribeAuth = firebase.auth().onAuthStateChanged(async (authUser: any) => {
                     if (authUser) {
                         const isHardcodedAdmin = authUser.email === 'admin@gmail.com';
@@ -707,6 +717,24 @@ export const App: React.FC = () => {
                                     // Sync to Google Sheets
                                     syncNewUser(updatedData);
                                 }
+
+                                // Show announcement if enabled and not expired
+                                if (!hasSeenAnnouncement) {
+                                    db.collection('settings').doc('announcement').get().then((doc: any) => {
+                                        if (doc.exists) {
+                                            const data = doc.data();
+                                            const now = new Date();
+                                            const expiry = data.expiryDate ? new Date(data.expiryDate) : null;
+                                            // Set expiry to end of day
+                                            if (expiry) expiry.setHours(23, 59, 59, 999);
+
+                                            if (data.enabled && data.message && (!expiry || now <= expiry)) {
+                                                setShowAnnouncement(true);
+                                                setHasSeenAnnouncement(true);
+                                            }
+                                        }
+                                    });
+                                }
                             } else {
                                 const profile = { 
                                     uid: authUser.uid, 
@@ -719,6 +747,23 @@ export const App: React.FC = () => {
                                 await db.collection('users').doc(authUser.uid).set(profile);
                                 setUser(profile as any);
                                 if (isKoperasi) setPage('admin');
+
+                                // Show announcement for new users too
+                                if (!hasSeenAnnouncement) {
+                                    db.collection('settings').doc('announcement').get().then((doc: any) => {
+                                        if (doc.exists) {
+                                            const data = doc.data();
+                                            const now = new Date();
+                                            const expiry = data.expiryDate ? new Date(data.expiryDate) : null;
+                                            if (expiry) expiry.setHours(23, 59, 59, 999);
+
+                                            if (data.enabled && data.message && (!expiry || now <= expiry)) {
+                                                setShowAnnouncement(true);
+                                                setHasSeenAnnouncement(true);
+                                            }
+                                        }
+                                    });
+                                }
                             }
                         }, (err: any) => {});
 
@@ -1265,6 +1310,49 @@ export const App: React.FC = () => {
             </header>
 
             <div className="flex flex-1 overflow-hidden relative">
+                {showAnnouncement && announcement && (
+                    <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-300">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-[#3498db]"></div>
+                            <button 
+                                onClick={() => setShowAnnouncement(false)}
+                                className="absolute top-6 right-6 w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-all text-gray-400"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                            
+                            <div className="text-center space-y-6 pt-4">
+                                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto text-[#3498db] text-3xl">
+                                    <i className="fas fa-bullhorn"></i>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black uppercase italic text-[#2c3e50] mb-2">Announcement</h3>
+                                    <div className="text-sm font-bold text-gray-500 leading-relaxed whitespace-pre-wrap">
+                                        {announcement.message}
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setShowAnnouncement(false)}
+                                    className="w-full bg-[#3498db] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl hover:bg-blue-600 transition-all active:scale-95"
+                                >
+                                    Got it!
+                                </button>
+                            </div>
+
+                            {announcement.duration > 0 && (
+                                <div className="mt-6 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                    <motion.div 
+                                        initial={{ width: '100%' }}
+                                        animate={{ width: '0%' }}
+                                        transition={{ duration: announcement.duration, ease: 'linear' }}
+                                        onAnimationComplete={() => setShowAnnouncement(false)}
+                                        className="h-full bg-[#3498db]"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
                 <div className="fixed right-6 bottom-6 z-[200] flex items-center gap-3">
                     {showSupportChat && !isAdmin && !isKoperasi && (
                         <div className="fixed right-6 bottom-24 w-[85vw] sm:w-80 h-[450px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 origin-bottom-right" onClick={(e) => e.stopPropagation()}>
@@ -1330,23 +1418,21 @@ export const App: React.FC = () => {
                             </div>
                         </div>
 
-                        {user && (
-                            isAdmin ? (
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); setShowAdminPanel(!showAdminPanel); }}
-                                    className="bg-[#2c3e50] text-white w-16 h-16 rounded-full shadow-2xl flex flex-col items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white z-[201]"
-                                >
-                                    <i className={`fas fa-${showAdminPanel ? 'times' : 'user-shield'} text-2xl`}></i>
-                                    <span className="text-[7px] font-black uppercase mt-1">Admin</span>
-                                </button>
-                            ) : !isKoperasi && (
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); setShowSupportChat(!showSupportChat); }}
-                                    className="bg-[#3498db] text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white z-[201] outline-none focus:outline-none"
-                                >
-                                    <i className="fas fa-comment-dots text-3xl"></i>
-                                </button>
-                            )
+                        {isAdmin ? (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setShowAdminPanel(!showAdminPanel); }}
+                                className="bg-[#2c3e50] text-white w-16 h-16 rounded-full shadow-2xl flex flex-col items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white z-[201]"
+                            >
+                                <i className={`fas fa-${showAdminPanel ? 'times' : 'user-shield'} text-2xl`}></i>
+                                <span className="text-[7px] font-black uppercase mt-1">Admin</span>
+                            </button>
+                        ) : !isKoperasi && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setShowSupportChat(!showSupportChat); }}
+                                className="bg-[#3498db] text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white z-[201] outline-none focus:outline-none"
+                            >
+                                <i className="fas fa-comment-dots text-3xl"></i>
+                            </button>
                         )}
                     </div>
                 </div>
@@ -2725,8 +2811,8 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
     const isKoperasi = user?.isKoperasi || user?.email === 'koperasi@gmail.com';
 
-    const [activeTab, setActiveTab] = useState<'users' | 'items' | 'vouchers' | 'chats'>(isKoperasi ? 'vouchers' : 'users');
-    const [data, setData] = useState<{users: any[], items: any[], redemptions: any[], completedItems: any[], supportChats: any[]}>({users: [], items: [], redemptions: [], completedItems: [], supportChats: []});
+    const [activeTab, setActiveTab] = useState<'users' | 'items' | 'vouchers' | 'chats' | 'announcement'>(isKoperasi ? 'vouchers' : 'users');
+    const [data, setData] = useState<{users: any[], items: any[], redemptions: any[], completedItems: any[], supportChats: any[], announcement: any}>({users: [], items: [], redemptions: [], completedItems: [], supportChats: [], announcement: null});
     const [searchQuery, setSearchQuery] = useState('');
     const [editingUser, setEditingUser] = useState<any>(null);
     const [activeSupportUser, setActiveSupportUser] = useState<any>(null);
@@ -2763,6 +2849,11 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                     }
                 });
                 setData(prev => ({...prev, supportChats: grouped}));
+            }));
+            unsubs.push(db.collection('settings').doc('announcement').onSnapshot((doc: any) => {
+                if (doc.exists) {
+                    setData(prev => ({...prev, announcement: doc.data()}));
+                }
             }));
         }
 
@@ -2952,6 +3043,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                         <button onClick={() => { setActiveTab('users'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'users' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>{t('users')}</button>
                         <button onClick={() => { setActiveTab('items'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'items' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>{t('offers')}</button>
                         <button onClick={() => { setActiveTab('chats'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'chats' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>{t('support')}</button>
+                        <button onClick={() => { setActiveTab('announcement'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'announcement' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>Popup</button>
                     </>
                 )}
             </div>
@@ -3160,6 +3252,89 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                             ))}
                         </div>
                     )
+                )}
+
+                {activeTab === 'announcement' && isAdmin && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                            <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-widest border-b pb-3">Popup Message Settings</h3>
+                            
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Message Content</label>
+                                    <textarea 
+                                        value={data.announcement?.message || ''} 
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setData(prev => ({...prev, announcement: {...prev.announcement, message: val}}));
+                                        }}
+                                        placeholder="Enter welcome message..."
+                                        className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none text-xs font-bold focus:border-[#3498db] transition-all"
+                                        rows={4}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Display Duration (Seconds)</label>
+                                        <input 
+                                            type="number"
+                                            value={data.announcement?.duration || 5} 
+                                            onChange={e => {
+                                                const val = parseInt(e.target.value);
+                                                setData(prev => ({...prev, announcement: {...prev.announcement, duration: val}}));
+                                            }}
+                                            className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Show Until Date</label>
+                                        <input 
+                                            type="date"
+                                            value={data.announcement?.expiryDate || ''} 
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setData(prev => ({...prev, announcement: {...prev.announcement, expiryDate: val}}));
+                                            }}
+                                            className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <input 
+                                        type="checkbox" 
+                                        id="announcement-enabled"
+                                        checked={data.announcement?.enabled || false}
+                                        onChange={e => {
+                                            const val = e.target.checked;
+                                            setData(prev => ({...prev, announcement: {...prev.announcement, enabled: val}}));
+                                        }}
+                                        className="w-5 h-5 rounded-lg border-2 border-gray-300 text-[#3498db] focus:ring-[#3498db]"
+                                    />
+                                    <label htmlFor="announcement-enabled" className="text-[10px] font-black uppercase text-[#2c3e50] cursor-pointer">Enable Popup</label>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={async () => {
+                                    if (typeof firebase === 'undefined' || !firebase.firestore) return;
+                                    try {
+                                        await firebase.firestore().collection('settings').doc('announcement').set({
+                                            ...data.announcement,
+                                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                        });
+                                        alert("Settings saved successfully!");
+                                    } catch (e: any) {
+                                        alert("Error saving settings: " + e.message);
+                                    }
+                                }}
+                                className="w-full bg-[#2c3e50] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl hover:bg-black transition-all active:scale-95"
+                            >
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
