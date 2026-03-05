@@ -653,7 +653,7 @@ export const App: React.FC = () => {
     // ---------------------------------
     
     // BRANDING STATES
-    const [branding, setBranding] = useState<{logoUrl?: string}>({});
+    const [branding, setBranding] = useState<{logoUrl?: string, maintenanceMode?: boolean}>({});
     const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
     const [logoPreview, setLogoPreview] = useState<string>('');
     const [uploading, setUploading] = useState(false);
@@ -1007,6 +1007,51 @@ export const App: React.FC = () => {
     );
 
     const unreadCount = notifications.filter(n => !n.read).length;
+
+    if (branding.maintenanceMode && !isAdmin) {
+        return (
+            <div className={`min-h-screen flex flex-col transition-colors duration-500 relative ${theme === 'dark' ? 'bg-[#050b18] text-white' : 'bg-[#f8f9fa] text-gray-900'}`}>
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                    <div className="w-32 h-32 mb-8 bg-white rounded-full p-4 shadow-2xl flex items-center justify-center">
+                        <Logo customUrl={branding.logoUrl} className="w-full h-full" />
+                    </div>
+                    <h1 className="text-3xl font-black uppercase italic text-[#2c3e50] mb-4 tracking-tighter">
+                        Miri Care Connect
+                    </h1>
+                    <div className="max-w-md bg-orange-50 border-4 border-orange-100 p-8 rounded-[3rem] shadow-2xl animate-in zoom-in duration-500">
+                        <p className="text-sm font-black uppercase text-orange-600 leading-relaxed italic">
+                            THIS WEBSITE IS CURRENTLY OFF , PLEASE STAY TUNED FOR THE MAINTENANCE , YOU CAN ASK QUESTION THROUGHT SUPPORT CHAT AT BOTTOM RIGHT
+                        </p>
+                    </div>
+                </div>
+                
+                {/* Support Chat Button */}
+                <div className="fixed bottom-8 right-8 z-[5000]">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setShowSupportChat(!showSupportChat); }}
+                        className="bg-[#3498db] text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-white outline-none focus:outline-none"
+                    >
+                        <i className="fas fa-comment-dots text-3xl"></i>
+                    </button>
+                </div>
+
+                {showSupportChat && (
+                    <div className="fixed right-6 bottom-24 w-[85vw] sm:w-80 h-[450px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 origin-bottom-right z-[5001]" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-[#3498db] p-4 text-white flex justify-between items-center">
+                            <div className="font-black uppercase text-xs flex items-center gap-2">
+                                <i className="fas fa-headset"></i>
+                                {t('admin_support')}
+                            </div>
+                            <button onClick={() => setShowSupportChat(false)} className="hover:rotate-90 transition-transform p-1">
+                                <i className="fas fa-times text-lg"></i>
+                            </button>
+                        </div>
+                        <SupportChatBody userId={user ? user.uid : guestId} userName={user ? user.displayName : 'Guest'} t={t} isGuest={!user} />
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className={`min-h-screen flex flex-col transition-colors duration-500 relative ${theme === 'dark' ? 'bg-[#050b18] text-white' : 'bg-[#f8f9fa] text-gray-900'}`} onClick={() => { setIsLangOpen(false); setIsQuickOfferOpen(false); }}>
@@ -1464,13 +1509,13 @@ export const App: React.FC = () => {
                         {page === 'profile' && !isKoperasi && <ProfilePage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onNavigate={() => {}} onUpdateUser={syncNewUser} />}
                         {page === 'shop' && <ShopPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onRedeemConfirm={setItemToRedeem} sheetInventory={sheetInventory} />}
                         {page === 'history' && !isKoperasi && <HistoryPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} />}
-                        {page === 'admin' && (isAdmin || isKoperasi) && <div className="bg-white p-8 rounded-[2.5rem] shadow-xl"><AdminPanelContent t={t} user={user} isKoperasiMenu={isKoperasi} onUpdateUser={syncNewUser} /></div>}
+                        {page === 'admin' && (isAdmin || isKoperasi) && <div className="bg-white p-8 rounded-[2.5rem] shadow-xl"><AdminPanelContent t={t} user={user} isKoperasiMenu={isKoperasi} onUpdateUser={syncNewUser} branding={branding} /></div>}
                     </div>
                 </main>
 
                 {isAdmin && (
                     <aside className={`fixed top-16 sm:top-20 right-4 bottom-[120px] w-72 sm:w-80 bg-white border border-gray-100 rounded-[2.5rem] shadow-2xl z-[100] transition-transform duration-300 transform overflow-hidden ${showAdminPanel ? 'translate-x-0' : 'translate-x-[120%]'}`}>
-                        <AdminPanelContent t={t} user={user} onUpdateUser={syncNewUser} />
+                        <AdminPanelContent t={t} user={user} onUpdateUser={syncNewUser} branding={branding} />
                     </aside>
                 )}
             </div>
@@ -2827,7 +2872,7 @@ const SupportChatBody: React.FC<{userId: string, userName: string, t: any, isGue
     );
 };
 
-const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: boolean, onUpdateUser?: (data: any) => void}> = ({t, user, isKoperasiMenu, onUpdateUser}) => {
+const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: boolean, onUpdateUser?: (data: any) => void, branding: any}> = ({t, user, isKoperasiMenu, onUpdateUser, branding}) => {
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
     const isKoperasi = user?.isKoperasi || user?.email === 'koperasi@gmail.com';
 
@@ -2842,6 +2887,21 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
     const [showDeclineModal, setShowDeclineModal] = useState(false);
     const [awardingPoints, setAwardingPoints] = useState<number>(0);
     const [isAwardingMode, setIsAwardingMode] = useState(false);
+
+    const toggleMaintenance = async () => {
+        if (typeof firebase === 'undefined' || !firebase.firestore) return;
+        const newMode = !branding.maintenanceMode;
+        if (!window.confirm(`Are you sure you want to turn the website ${newMode ? 'OFF' : 'ON'}?`)) return;
+        
+        try {
+            await firebase.firestore().collection('settings').doc('branding').set({ 
+                maintenanceMode: newMode 
+            }, { merge: true });
+            alert(`Website is now ${newMode ? 'OFF' : 'ON'}`);
+        } catch (e: any) {
+            alert(e.message);
+        }
+    };
 
     useEffect(() => {
         if (typeof firebase === 'undefined' || !firebase.firestore) return;
@@ -3051,10 +3111,19 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             <div className="flex justify-between items-start mb-4 shrink-0">
                 <h2 className="text-xl font-black italic uppercase text-[#2c3e50] border-b-4 border-[#3498db] pb-2 inline-block">{isAdmin ? t('admin_panel') : t('koperasi_panel')}</h2>
                 {isAdmin && (
-                    <button onClick={handleResetRD} className="text-[8px] font-black uppercase bg-red-100 text-red-500 px-2 py-1 rounded-md hover:bg-red-200 transition-colors shadow-sm">
-                        <i className="fas fa-sync-alt mr-1"></i>
-                        {t('reset_codes')}
-                    </button>
+                    <div className="flex flex-col items-end gap-1">
+                        <button onClick={handleResetRD} className="text-[8px] font-black uppercase bg-red-100 text-red-500 px-2 py-1 rounded-md hover:bg-red-200 transition-colors shadow-sm">
+                            <i className="fas fa-sync-alt mr-1"></i>
+                            {t('reset_codes')}
+                        </button>
+                        <button 
+                            onClick={toggleMaintenance} 
+                            className={`text-[8px] font-black uppercase px-2 py-1 rounded-md transition-colors shadow-sm ${branding.maintenanceMode ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}
+                        >
+                            <i className={`fas fa-${branding.maintenanceMode ? 'play' : 'pause'} mr-1`}></i>
+                            {branding.maintenanceMode ? 'Turn Website ON' : 'Turn Website OFF'}
+                        </button>
+                    </div>
                 )}
             </div>
             <div className="flex flex-wrap gap-1 mb-4 shrink-0">
