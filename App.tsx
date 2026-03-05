@@ -542,6 +542,26 @@ export const App: React.FC = () => {
     const [hasSeenAnnouncement, setHasSeenAnnouncement] = useState(false);
     const hasSeenAnnouncementRef = useRef(false);
     
+    useEffect(() => {
+        if (announcement && !hasSeenAnnouncementRef.current) {
+            const data = announcement;
+            const now = new Date();
+            const expiry = data.expiryDate ? new Date(data.expiryDate) : null;
+            if (expiry) expiry.setHours(23, 59, 59, 999);
+
+            const announcementId = data.updatedAt?.toMillis?.() || 'default';
+            // Use a device-wide key to ensure it shows for everyone once per announcement
+            const seenKey = `seen_announcement_global_${announcementId}`;
+
+            if (data.enabled && data.message && (!expiry || now <= expiry) && !localStorage.getItem(seenKey)) {
+                setShowAnnouncement(true);
+                setHasSeenAnnouncement(true);
+                hasSeenAnnouncementRef.current = true;
+                localStorage.setItem(seenKey, 'true');
+            }
+        }
+    }, [announcement]);
+
     // --- GOOGLE SHEETS INTEGRATION ---
     const [sheetInventory, setSheetInventory] = useState<string[]>([]);
 
@@ -741,29 +761,6 @@ export const App: React.FC = () => {
                                     // Sync to Google Sheets
                                     syncNewUser(updatedData);
                                 }
-
-                                // Show announcement if enabled and not expired
-                                if (!hasSeenAnnouncementRef.current) {
-                                    db.collection('settings').doc('announcement').get().then((doc: any) => {
-                                        if (doc.exists) {
-                                            const data = doc.data();
-                                            const now = new Date();
-                                            const expiry = data.expiryDate ? new Date(data.expiryDate) : null;
-                                            // Set expiry to end of day
-                                            if (expiry) expiry.setHours(23, 59, 59, 999);
-
-                                            const announcementId = data.updatedAt?.toMillis?.() || 'default';
-                                            const seenKey = `seen_announcement_${authUser.uid}_${announcementId}`;
-
-                                            if (data.enabled && data.message && (!expiry || now <= expiry) && !localStorage.getItem(seenKey)) {
-                                                setShowAnnouncement(true);
-                                                setHasSeenAnnouncement(true);
-                                                hasSeenAnnouncementRef.current = true;
-                                                localStorage.setItem(seenKey, 'true');
-                                            }
-                                        }
-                                    });
-                                }
                             } else {
                                 const profile = { 
                                     uid: authUser.uid, 
@@ -776,28 +773,6 @@ export const App: React.FC = () => {
                                 await db.collection('users').doc(authUser.uid).set(profile);
                                 setUser(profile as any);
                                 if (isKoperasi) setPage('admin');
-
-                                // Show announcement for new users too
-                                if (!hasSeenAnnouncementRef.current) {
-                                    db.collection('settings').doc('announcement').get().then((doc: any) => {
-                                        if (doc.exists) {
-                                            const data = doc.data();
-                                            const now = new Date();
-                                            const expiry = data.expiryDate ? new Date(data.expiryDate) : null;
-                                            if (expiry) expiry.setHours(23, 59, 59, 999);
-
-                                            const announcementId = data.updatedAt?.toMillis?.() || 'default';
-                                            const seenKey = `seen_announcement_${authUser.uid}_${announcementId}`;
-
-                                            if (data.enabled && data.message && (!expiry || now <= expiry) && !localStorage.getItem(seenKey)) {
-                                                setShowAnnouncement(true);
-                                                setHasSeenAnnouncement(true);
-                                                hasSeenAnnouncementRef.current = true;
-                                                localStorage.setItem(seenKey, 'true');
-                                            }
-                                        }
-                                    });
-                                }
                             }
                         }, (err: any) => {});
 
@@ -1024,7 +999,7 @@ export const App: React.FC = () => {
         }
     };
 
-    if (loading) return (
+    if (loading && !showAnnouncement) return (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#f8f9fa] text-[#3498db] font-black italic uppercase text-center">
             <i className="fas fa-spinner fa-spin text-5xl mb-4"></i>
             {t('loading_citizens')}
@@ -1035,6 +1010,12 @@ export const App: React.FC = () => {
 
     return (
         <div className={`min-h-screen flex flex-col transition-colors duration-500 relative ${theme === 'dark' ? 'bg-[#050b18] text-white' : 'bg-[#f8f9fa] text-gray-900'}`} onClick={() => { setIsLangOpen(false); setIsQuickOfferOpen(false); }}>
+            {loading && (
+                <div className="fixed inset-0 z-[4000] flex flex-col items-center justify-center bg-[#f8f9fa] text-[#3498db] font-black italic uppercase text-center">
+                    <i className="fas fa-spinner fa-spin text-5xl mb-4"></i>
+                    {t('loading_citizens')}
+                </div>
+            )}
             <style>{`
                 .galaxy-bg {
                     position: fixed;
@@ -1350,7 +1331,7 @@ export const App: React.FC = () => {
 
             <div className="flex flex-1 overflow-hidden relative">
                 {showAnnouncement && announcement && (
-                    <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
                         <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden animate-in zoom-in duration-300">
                             <div className="absolute top-0 left-0 w-full h-2 bg-[#3498db]"></div>
                             <button 
