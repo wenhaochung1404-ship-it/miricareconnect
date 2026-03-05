@@ -540,6 +540,7 @@ export const App: React.FC = () => {
     const [announcement, setAnnouncement] = useState<any>(null);
     const [showAnnouncement, setShowAnnouncement] = useState(false);
     const [hasSeenAnnouncement, setHasSeenAnnouncement] = useState(false);
+    const hasSeenAnnouncementRef = useRef(false);
     
     // --- GOOGLE SHEETS INTEGRATION ---
     const [sheetInventory, setSheetInventory] = useState<string[]>([]);
@@ -573,30 +574,44 @@ export const App: React.FC = () => {
         fetchActiveItems();
     }, []);
 
+    const isSyncingRef = useRef(false);
     // 1. Function to log Redemptions
     const syncRedemption = async (user: any, itemName: string) => {
         try {
-            await fetch(SHEET_URL, {
+            // Use a background fetch to avoid blocking UI
+            fetch(SHEET_URL, {
                 method: 'POST',
                 mode: 'no-cors', 
+                cache: 'no-cache',
+                redirect: 'follow',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
                 body: JSON.stringify({
                     username: user.displayName,
                     email: user.email,
                     item: itemName
                 })
+            }).catch(() => {
+                // Silent catch for background sync
             });
         } catch (err) {
-            console.error("Redemption Sync Error:", err);
+            // Silent catch for background sync
         }
     };
 
     // 2. Function to log New Users
     const syncNewUser = async (newUser: any) => {
         try {
-            // This payload ensures the password reaches Column G based on our Master Script
-            await fetch(SHEET_URL, {
+            // Use a background fetch to avoid blocking UI
+            fetch(SHEET_URL, {
                 method: 'POST',
                 mode: 'no-cors',
+                cache: 'no-cache',
+                redirect: 'follow',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
                 body: JSON.stringify({
                     type: "REGISTRATION",
                     displayName: newUser.displayName || "",
@@ -608,9 +623,11 @@ export const App: React.FC = () => {
                     status: newUser.status || "Verified", // This maps to Column H
                     secondCheck: newUser.secondCheck || "(verified)" // This maps to Column I
                 })
+            }).catch(() => {
+                // Silent catch for background sync
             });
         } catch (err) {
-            console.error("Registration Sync Error:", err);
+            // Silent catch for background sync
         }
     };
     // ---------------------------------
@@ -649,6 +666,8 @@ export const App: React.FC = () => {
         let unsubscribeAuth: () => void = () => {};
         let unsubNotifs: () => void = () => {};
         let unsubBranding: () => void = () => {};
+        let unsubUser: () => void = () => {};
+        let unsubAnnouncement: () => void = () => {};
 
         const initFirebase = async () => {
             if (typeof firebase === 'undefined' || !firebase.auth) {
@@ -681,7 +700,7 @@ export const App: React.FC = () => {
                     }
                 });
 
-                db.collection('settings').doc('announcement').onSnapshot((doc: any) => {
+                unsubAnnouncement = db.collection('settings').doc('announcement').onSnapshot((doc: any) => {
                     if (doc.exists) {
                         setAnnouncement(doc.data());
                     }
@@ -693,7 +712,8 @@ export const App: React.FC = () => {
                         const isKoperasi = authUser.email === 'koperasi@gmail.com';
                         setEmailVerified(true);
                         
-                        db.collection('users').doc(authUser.uid).onSnapshot(async (doc: any) => {
+                        if (unsubUser) unsubUser();
+                        unsubUser = db.collection('users').doc(authUser.uid).onSnapshot(async (doc: any) => {
                             if (doc.exists) {
                                 const data = doc.data();
                                 setUser({ ...data, uid: authUser.uid });
@@ -705,13 +725,17 @@ export const App: React.FC = () => {
 
                                 // Check if we need to update Firebase and Sheet
                                 // We update if the current data doesn't match our target state
-                                if (data.status !== targetStatus || data.secondCheck !== targetSecondCheck) {
+                                if ((data.status !== targetStatus || data.secondCheck !== targetSecondCheck) && !isSyncingRef.current) {
+                                    isSyncingRef.current = true;
                                     const updatedData = { ...data, status: targetStatus, secondCheck: targetSecondCheck };
                                     
                                     // Update Firebase
                                     await db.collection('users').doc(authUser.uid).update({ 
                                         status: targetStatus, 
                                         secondCheck: targetSecondCheck 
+                                    }).finally(() => {
+                                        // Reset guard after a short delay to allow snapshot to settle
+                                        setTimeout(() => { isSyncingRef.current = false; }, 2000);
                                     });
                                     
                                     // Sync to Google Sheets
@@ -719,7 +743,7 @@ export const App: React.FC = () => {
                                 }
 
                                 // Show announcement if enabled and not expired
-                                if (!hasSeenAnnouncement) {
+                                if (!hasSeenAnnouncementRef.current) {
                                     db.collection('settings').doc('announcement').get().then((doc: any) => {
                                         if (doc.exists) {
                                             const data = doc.data();
@@ -728,9 +752,14 @@ export const App: React.FC = () => {
                                             // Set expiry to end of day
                                             if (expiry) expiry.setHours(23, 59, 59, 999);
 
-                                            if (data.enabled && data.message && (!expiry || now <= expiry)) {
+                                            const announcementId = data.updatedAt?.toMillis?.() || 'default';
+                                            const seenKey = `seen_announcement_${authUser.uid}_${announcementId}`;
+
+                                            if (data.enabled && data.message && (!expiry || now <= expiry) && !localStorage.getItem(seenKey)) {
                                                 setShowAnnouncement(true);
                                                 setHasSeenAnnouncement(true);
+                                                hasSeenAnnouncementRef.current = true;
+                                                localStorage.setItem(seenKey, 'true');
                                             }
                                         }
                                     });
@@ -749,7 +778,7 @@ export const App: React.FC = () => {
                                 if (isKoperasi) setPage('admin');
 
                                 // Show announcement for new users too
-                                if (!hasSeenAnnouncement) {
+                                if (!hasSeenAnnouncementRef.current) {
                                     db.collection('settings').doc('announcement').get().then((doc: any) => {
                                         if (doc.exists) {
                                             const data = doc.data();
@@ -757,9 +786,14 @@ export const App: React.FC = () => {
                                             const expiry = data.expiryDate ? new Date(data.expiryDate) : null;
                                             if (expiry) expiry.setHours(23, 59, 59, 999);
 
-                                            if (data.enabled && data.message && (!expiry || now <= expiry)) {
+                                            const announcementId = data.updatedAt?.toMillis?.() || 'default';
+                                            const seenKey = `seen_announcement_${authUser.uid}_${announcementId}`;
+
+                                            if (data.enabled && data.message && (!expiry || now <= expiry) && !localStorage.getItem(seenKey)) {
                                                 setShowAnnouncement(true);
                                                 setHasSeenAnnouncement(true);
+                                                hasSeenAnnouncementRef.current = true;
+                                                localStorage.setItem(seenKey, 'true');
                                             }
                                         }
                                     });
@@ -783,7 +817,10 @@ export const App: React.FC = () => {
                         setNotifications([]);
                         setEmailVerified(true);
                         setPage('home');
+                        setHasSeenAnnouncement(false);
+                        hasSeenAnnouncementRef.current = false;
                         if (unsubNotifs) unsubNotifs();
+                        if (unsubUser) unsubUser();
                     }
                     setLoading(false);
                 }, (err: any) => {
@@ -799,6 +836,8 @@ export const App: React.FC = () => {
             if (unsubscribeAuth) unsubscribeAuth();
             if (unsubNotifs) unsubNotifs();
             if (unsubBranding) unsubBranding();
+            if (unsubUser) unsubUser();
+            if (unsubAnnouncement) unsubAnnouncement();
             if (uploadTaskRef.current) {
                 try { uploadTaskRef.current.cancel(); } catch(e) {}
             }
