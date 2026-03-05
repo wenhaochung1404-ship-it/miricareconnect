@@ -600,7 +600,6 @@ export const App: React.FC = () => {
                     phone: newUser.phone || "",
                     userClass: newUser.userClass || "",
                     birthdate: newUser.birthdate || "",
-                    address: newUser.address || "",
                     password: newUser.password || "", // This maps to Column G
                     status: newUser.status || "Verified", // This maps to Column H
                     secondCheck: newUser.secondCheck || "(verified)" // This maps to Column I
@@ -1639,7 +1638,7 @@ export const App: React.FC = () => {
 
 const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegisterSuccess: (data: any) => void, theme: 'light' | 'dark'}> = ({onClose, t, lang, onRegisterSuccess, theme}) => {
     const [mode, setMode] = useState<'login' | 'register'>('login');
-    const [data, setData] = useState({ email: '', password: '', name: '', birthdate: '', phone: '', address: '', userClass: '' });
+    const [data, setData] = useState({ email: '', password: '', name: '', birthdate: '', phone: '', userClass: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
@@ -1666,7 +1665,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 onClose();
             } else if (currentMode === 'register') {
                 // Validate all fields are filled
-                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !dataInput.userClass || !dataInput.address) {
+                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !dataInput.userClass) {
                     const msg = t('fill_all_fields');
                     alert(msg);
                     throw new Error(msg);
@@ -1682,7 +1681,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 if (user) {
                     const userData = { 
                         email: dataInput.email, displayName: dataInput.name, points: 5, birthdate: dataInput.birthdate, 
-                        phone: dataInput.phone, address: dataInput.address, userClass: dataInput.userClass, 
+                        phone: dataInput.phone, userClass: dataInput.userClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
                         password: dataInput.password,
@@ -2795,7 +2794,6 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                 email: editingUser.email || '',
                 points: Number(editingUser.points),
                 phone: editingUser.phone || '',
-                address: editingUser.address || '',
                 birthdate: editingUser.birthdate || '',
                 userClass: editingUser.userClass || '',
                 password: editingUser.password || '',
@@ -2971,7 +2969,6 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 <AdminInput label={t('email_address')} value={editingUser.email} onChange={v => setEditingUser({...editingUser, email: v})} />
                                 <AdminInput label={t('points')} type="number" value={editingUser.points} onChange={v => setEditingUser({...editingUser, points: v})} />
                                 <AdminInput label={t('phone_number')} value={editingUser.phone} onChange={v => setEditingUser({...editingUser, phone: v})} />
-                                <AdminInput label={t('home_address')} value={editingUser.address} onChange={v => setEditingUser({...editingUser, address: v})} />
                                 <AdminInput label={t('birthdate')} value={editingUser.birthdate} onChange={v => setEditingUser({...editingUser, birthdate: v})} />
                                 <AdminInput label={t('class_label')} value={editingUser.userClass} onChange={v => setEditingUser({...editingUser, userClass: v})} />
                                 <AdminInput label={t('password_label')} value={editingUser.password || ''} onChange={v => setEditingUser({...editingUser, password: v})} />
