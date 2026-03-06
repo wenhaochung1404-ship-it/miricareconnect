@@ -1643,7 +1643,7 @@ export const App: React.FC = () => {
                                             </div>
                                             <div className="flex-1">
                                                 <p className="text-[11px] font-black text-gray-800 uppercase tracking-tighter">
-                                                  {n.type === 'offer' ? t('new_offer_notif') : n.type === 'message' ? t('support_msg_notif') : t('points_earned_notif')}
+                                                  {n.title || (n.type === 'offer' ? t('new_offer_notif') : n.type === 'message' ? t('support_msg_notif') : t('points_earned_notif'))}
                                                 </p>
                                                 <p className="text-[10px] text-gray-500 font-medium">{n.message}</p>
                                                 <div className="mt-2 text-[8px] font-black text-gray-400 uppercase">
@@ -2884,9 +2884,14 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
     const [adminReply, setAdminReply] = useState('');
     const [selectedOffer, setSelectedOffer] = useState<any>(null);
     const [declineReason, setDeclineReason] = useState('');
+    const [approvalReason, setApprovalReason] = useState('');
     const [showDeclineModal, setShowDeclineModal] = useState(false);
     const [awardingPoints, setAwardingPoints] = useState<number>(0);
     const [isAwardingMode, setIsAwardingMode] = useState(false);
+    
+    const [notifyingUser, setNotifyingUser] = useState<any>(null);
+    const [notifTitle, setNotifTitle] = useState('');
+    const [notifMessage, setNotifMessage] = useState('');
 
     const toggleMaintenance = async () => {
         if (typeof firebase === 'undefined' || !firebase.firestore) return;
@@ -3048,7 +3053,11 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                 const currentPoints = donorDoc.exists ? (donorDoc.data().points || 0) : 0;
                 transaction.update(donorRef, { points: currentPoints + awardingPoints });
                 transaction.set(db.collection('completed_donations').doc(offer.id), {
-                    ...offer, completedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedBy: user.uid, earnedPoints: awardingPoints
+                    ...offer, 
+                    completedAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                    confirmedBy: user.uid, 
+                    earnedPoints: awardingPoints,
+                    approvalReason: approvalReason.trim() || null
                 });
                 transaction.delete(db.collection('donations').doc(offer.id));
             });
@@ -3056,7 +3065,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             await db.collection('notifications').add({
                 userId: offer.userId,
                 title: t('points_earned_notif'),
-                message: `${t('verified')}! ${t('points_earned')}: ${awardingPoints}`,
+                message: `${t('verified')}! ${t('points_earned')}: ${awardingPoints}${approvalReason ? `\n\nReason: ${approvalReason}` : ''}`,
                 type: 'status',
                 read: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3065,6 +3074,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             alert(t('verified') + "!");
             setIsAwardingMode(false);
             setAwardingPoints(0);
+            setApprovalReason('');
             setSelectedOffer(null);
         } catch (err: any) {
             alert(t('approval_failed'));
@@ -3106,6 +3116,29 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
         }
     };
 
+    const sendPrivateNotification = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!notifyingUser || !notifTitle.trim() || !notifMessage.trim()) return;
+        if (typeof firebase === 'undefined' || !firebase.firestore) return;
+        
+        try {
+            await firebase.firestore().collection('notifications').add({
+                userId: notifyingUser.uid,
+                title: notifTitle,
+                message: notifMessage,
+                type: 'message',
+                read: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert("Notification sent successfully to " + notifyingUser.displayName);
+            setNotifyingUser(null);
+            setNotifTitle('');
+            setNotifMessage('');
+        } catch (err: any) {
+            alert("Failed to send notification: " + err.message);
+        }
+    };
+
     return (
         <div className={`h-full flex flex-col ${isKoperasiMenu ? '' : 'p-4 sm:p-6'} overflow-hidden bg-white admin-panel-container`}>
             <div className="flex justify-between items-start mb-4 shrink-0">
@@ -3138,6 +3171,43 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             </div>
             
             <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-hide">
+                {notifyingUser && (
+                    <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
+                            <h3 className="text-xl font-black uppercase italic text-[#2c3e50] mb-2">Send Notification</h3>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-6">To: {notifyingUser.displayName}</p>
+                            
+                            <form onSubmit={sendPrivateNotification} className="space-y-4">
+                                <AdminInput 
+                                    label="Notification Title" 
+                                    value={notifTitle} 
+                                    onChange={setNotifTitle} 
+                                    placeholder="Enter title..."
+                                />
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black uppercase text-gray-400 tracking-widest ml-2">Message</label>
+                                    <textarea 
+                                        value={notifMessage} 
+                                        onChange={e => setNotifMessage(e.target.value)} 
+                                        className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none text-xs font-bold focus:border-[#3498db] transition-all"
+                                        placeholder="Enter message..."
+                                        rows={4}
+                                        required
+                                    />
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <button type="submit" className="flex-1 bg-[#3498db] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
+                                        Send Now
+                                    </button>
+                                    <button type="button" onClick={() => setNotifyingUser(null)} className="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl font-black uppercase text-xs">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
                 {activeTab === 'users' && isAdmin && (
                     <div className="space-y-4">
                         <div className="bg-[#2c3e50] text-white p-4 rounded-2xl shadow-inner flex justify-between items-center">
@@ -3164,21 +3234,24 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                             <>
                                 <input placeholder={t('search_placeholder')} className="w-full bg-gray-50 border p-3 rounded-xl text-xs font-bold outline-none" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                                 <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-[8px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
-                                    <div className="col-span-2">#</div>
-                                    <div className="col-span-6">{t('full_name')}</div>
-                                    <div className="col-span-2">{t('points')}</div>
-                                    <div className="col-span-2 text-right">Action</div>
+                                    <div className="col-span-1">#</div>
+                                    <div className="col-span-5">{t('full_name')}</div>
+                                    <div className="col-span-3 text-center">{t('points')}</div>
+                                    <div className="col-span-3 text-right">Action</div>
                                 </div>
                                 {filteredUsers.map((u, index) => (
                                     <div key={u.uid} className="bg-white p-3 border rounded-xl flex flex-col sm:grid sm:grid-cols-12 items-center gap-2 sm:gap-4 group hover:border-[#3498db] transition-all">
-                                        <div className="hidden sm:flex col-span-2 w-8 h-8 items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
-                                        <div className="col-span-11 sm:col-span-6 overflow-hidden w-full">
+                                        <div className="hidden sm:flex col-span-1 w-8 h-8 items-center justify-center bg-gray-100 rounded-lg text-[10px] font-black text-gray-400 shrink-0">#{index + 1}</div>
+                                        <div className="col-span-11 sm:col-span-5 overflow-hidden w-full min-w-0">
                                             <div className="font-black text-[10px] truncate">{u.displayName}</div>
                                         </div>
-                                        <div className="col-span-2 text-[9px] font-black text-[#f39c12]">
+                                        <div className="col-span-11 sm:col-span-3 text-[9px] font-black text-[#f39c12] sm:text-center">
                                             {u.points} <span className="text-[7px] uppercase">pts</span>
                                         </div>
-                                        <div className="col-span-2 text-right w-full">
+                                        <div className="col-span-11 sm:col-span-3 text-right w-full flex justify-end gap-1">
+                                            <button onClick={() => setNotifyingUser(u)} className="text-orange-500 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-orange-50 rounded-lg" title="Send Notification">
+                                                <i className="fas fa-paper-plane"></i>
+                                            </button>
                                             <button onClick={() => setEditingUser(u)} className="text-[#3498db] sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-blue-50 rounded-lg">
                                                 <i className="fas fa-edit"></i>
                                             </button>
@@ -3234,11 +3307,21 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                             onChange={setAwardingPoints} 
                                             placeholder={t('enter_points_placeholder')}
                                         />
+                                        <div className="mt-4">
+                                            <label className="text-[8px] font-black uppercase text-gray-400 tracking-widest ml-2">Reason (Optional)</label>
+                                            <textarea 
+                                                value={approvalReason} 
+                                                onChange={e => setApprovalReason(e.target.value)} 
+                                                className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none text-xs font-bold focus:border-[#2ecc71] transition-all"
+                                                placeholder="Type a reason for the points (optional)..."
+                                                rows={3}
+                                            />
+                                        </div>
                                         <div className="flex gap-3 pt-6">
                                             <button onClick={() => approveOffer(selectedOffer)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
                                                 {t('confirm')}
                                             </button>
-                                            <button onClick={() => setIsAwardingMode(false)} className="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl font-black uppercase text-xs">
+                                            <button onClick={() => { setIsAwardingMode(false); setApprovalReason(''); }} className="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl font-black uppercase text-xs">
                                                 {t('cancel')}
                                             </button>
                                         </div>
