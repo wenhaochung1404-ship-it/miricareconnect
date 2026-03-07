@@ -96,6 +96,10 @@ const MenuItem: React.FC<{icon: string, label: string, onClick: () => void, acti
     </button>
 );
 
+const CLASS_LEVELS = ['1', '2', '3', '4', '5'];
+const CLASS_SECTIONS = ['EINSTEIN', 'AVICENNA', 'NEWTON', 'HAWKING', 'AMANAH', 'BAKTI', 'CERGAS', 'DEDIKASI', 'ELOK', 'FASIH', 'GIGIH', 'HARMONI', 'EDISON'];
+const ALL_CLASSES = CLASS_LEVELS.flatMap(lvl => CLASS_SECTIONS.map(sec => `${lvl}${sec}`));
+
 const AdminInput: React.FC<{label: string, value: any, onChange?: (v: any) => void, type?: string, disabled?: boolean, placeholder?: string, min?: string}> = ({label, value, onChange, type = 'text', disabled = false, placeholder, min}) => (
     <div className="space-y-2">
         <label className="text-[8px] font-black uppercase text-gray-400 tracking-[0.2em] ml-1">{label}</label>
@@ -110,6 +114,55 @@ const AdminInput: React.FC<{label: string, value: any, onChange?: (v: any) => vo
         />
     </div>
 );
+
+const CustomDropdown: React.FC<{
+    label: string, 
+    value: string, 
+    options: string[], 
+    onSelect: (val: string) => void,
+    placeholder?: string
+}> = ({ label, value, options, onSelect, placeholder }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    
+    return (
+        <div className="space-y-1 relative">
+            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{label}</label>
+            <div className="relative">
+                <button 
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm flex justify-between items-center bg-white border-2 border-gray-50 hover:border-gray-200 transition-all"
+                >
+                    <span className={value ? 'text-[#2c3e50]' : 'text-gray-400'}>
+                        {value || placeholder || 'Select...'}
+                    </span>
+                    <i className={`fas fa-chevron-down text-[10px] text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}></i>
+                </button>
+                
+                {isOpen && (
+                    <>
+                        <div className="fixed inset-0 z-[1001]" onClick={() => setIsOpen(false)}></div>
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[1002] max-h-48 overflow-y-auto scrollbar-hide animate-in slide-in-from-top-2">
+                            {options.map(opt => (
+                                <button
+                                    key={opt}
+                                    type="button"
+                                    onClick={() => {
+                                        onSelect(opt);
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full text-left p-4 text-sm font-bold hover:bg-blue-50 transition-colors ${value === opt ? 'text-[#3498db] bg-blue-50/50' : 'text-[#2c3e50]'}`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const OffersPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
     const [donations, setDonations] = useState<any[]>([]);
@@ -1711,7 +1764,7 @@ export const App: React.FC = () => {
                             
                             // Use the selected item name from the modal's dropdown
                             const finalItemName = selectedItemName || itemToRedeem.name;
-                            const finalItemCost = itemToRedeem.name === finalItemName ? itemToRedeem.cost : 0; // Default cost 0 for sheet items
+                            const finalItemCost = itemToRedeem.cost; // Always use the cost of the reward category
 
                             let rdCode = '';
                             await db.runTransaction(async (transaction: any) => {
@@ -1790,6 +1843,8 @@ export const App: React.FC = () => {
 const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegisterSuccess: (data: any) => void, theme: 'light' | 'dark'}> = ({onClose, t, lang, onRegisterSuccess, theme}) => {
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [data, setData] = useState({ email: '', password: '', name: '', birthdate: '', phone: '', userClass: '' });
+    const [classLevel, setClassLevel] = useState<string>('');
+    const [classSection, setClassSection] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
@@ -1815,8 +1870,11 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
 
                 onClose();
             } else if (currentMode === 'register') {
+                const finalUserClass = `${classLevel}${classSection}`;
+                const formattedPhone = dataInput.phone.startsWith('60') ? dataInput.phone : `60${dataInput.phone.replace(/^0+/, '')}`;
+
                 // Validate all fields are filled
-                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !dataInput.userClass) {
+                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !classLevel || !classSection) {
                     const msg = t('fill_all_fields');
                     alert(msg);
                     throw new Error(msg);
@@ -1832,7 +1890,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 if (user) {
                     const userData = { 
                         email: dataInput.email, displayName: dataInput.name, points: 5, birthdate: dataInput.birthdate, 
-                        phone: dataInput.phone, userClass: dataInput.userClass, 
+                        phone: formattedPhone, userClass: finalUserClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
                         password: dataInput.password,
@@ -1942,16 +2000,29 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                     <form onSubmit={(e) => submit(data, mode, e)} className="space-y-4">
                         {mode === 'register' && (
                             <>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('full_name_ic')}</label>
                                         <input placeholder="(Issac Newton)" value={data.name} onChange={e => setData({...data, name: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('class_label')}</label>
-                                        <input placeholder="(5 Einstein)" value={data.userClass} onChange={e => setData({...data, userClass: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <CustomDropdown 
+                                            label={t('class_level')} 
+                                            value={classLevel} 
+                                            options={['1', '2', '3', '4', '5']} 
+                                            onSelect={setClassLevel} 
+                                            placeholder="Level"
+                                        />
+                                        <CustomDropdown 
+                                            label={t('class_section')} 
+                                            value={classSection} 
+                                            options={['EINSTEIN', 'AVICENNA', 'NEWTON', 'HAWKING', 'AMANAH', 'BAKTI', 'CERGAS', 'DEDIKASI', 'ELOK', 'FASIH', 'GIGIH', 'HARMONI', 'EDISON']} 
+                                            onSelect={setClassSection} 
+                                            placeholder="Section"
+                                        />
                                     </div>
                                 </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Birthdate</label>
@@ -1959,7 +2030,17 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Phone</label>
-                                        <input type="tel" placeholder="(6012-345-6789)" value={data.phone} onChange={e => setData({...data, phone: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-sm text-[#3498db]">+6</span>
+                                            <input 
+                                                type="tel" 
+                                                placeholder="0123456789" 
+                                                value={data.phone} 
+                                                onChange={e => setData({...data, phone: e.target.value.replace(/[^0-9]/g, '')})} 
+                                                className="w-full bright-input p-4 pl-12 rounded-2xl outline-none font-bold text-sm" 
+                                                required 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </>
@@ -2011,18 +2092,28 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState<any>(null);
     const [saving, setSaving] = useState(false);
+    const [classLevel, setClassLevel] = useState<string>('');
+    const [classSection, setClassSection] = useState<string>('');
 
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
 
     useEffect(() => {
         if (user) {
+            const phoneVal = user.phone || '';
+            const displayPhone = phoneVal.startsWith('60') ? phoneVal.substring(2) : phoneVal;
+            
             setEditData({
                 displayName: user.displayName || '',
                 userClass: user.userClass || '',
-                phone: user.phone || '',
+                phone: displayPhone,
                 birthdate: user.birthdate || '',
                 email: user.email || ''
             });
+
+            if (user.userClass) {
+                setClassLevel(user.userClass[0]);
+                setClassSection(user.userClass.substring(1));
+            }
         }
     }, [user, isEditing]);
 
@@ -2032,6 +2123,9 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
         if (!editData || !user || typeof firebase === 'undefined' || !firebase.firestore) return;
         setSaving(true);
         try {
+            const finalUserClass = `${classLevel}${classSection}`;
+            const formattedPhone = editData.phone.startsWith('60') ? editData.phone : `60${editData.phone.replace(/^0+/, '')}`;
+
             // Check if email changed
             if (editData.email !== user.email) {
                 // Validate email
@@ -2061,8 +2155,8 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
 
             const updatePayload = {
                 displayName: editData.displayName,
-                userClass: editData.userClass,
-                phone: editData.phone,
+                userClass: finalUserClass,
+                phone: formattedPhone,
                 birthdate: editData.birthdate,
                 email: editData.email
             };
@@ -2105,19 +2199,32 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                     {user.displayName?.[0] || '?'}
                 </div>
                 {isEditing ? (
-                    <div className="space-y-4 max-w-xs mx-auto">
-                        <input 
-                            value={editData.displayName} 
-                            onChange={e => setEditData({...editData, displayName: e.target.value})}
-                            placeholder={t('full_name')}
-                            className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
-                        />
-                        <input 
-                            value={editData.userClass} 
-                            onChange={e => setEditData({...editData, userClass: e.target.value})}
-                            placeholder={t('class_label')}
-                            className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
-                        />
+                    <div className="space-y-4 max-w-md mx-auto">
+                        <div className="space-y-1">
+                            <label className="text-[8px] font-black text-white/40 uppercase tracking-widest ml-1">{t('full_name')}</label>
+                            <input 
+                                value={editData.displayName} 
+                                onChange={e => setEditData({...editData, displayName: e.target.value})}
+                                placeholder={t('full_name')}
+                                className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <CustomDropdown 
+                                label={t('class_level')} 
+                                value={classLevel} 
+                                options={['1', '2', '3', '4', '5']} 
+                                onSelect={setClassLevel} 
+                                placeholder="Level"
+                            />
+                            <CustomDropdown 
+                                label={t('class_section')} 
+                                value={classSection} 
+                                options={['EINSTEIN', 'AVICENNA', 'NEWTON', 'HAWKING', 'AMANAH', 'BAKTI', 'CERGAS', 'DEDIKASI', 'ELOK', 'FASIH', 'GIGIH', 'HARMONI', 'EDISON']} 
+                                onSelect={setClassSection} 
+                                placeholder="Section"
+                            />
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -2167,14 +2274,32 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-1">
-                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('phone_number')}</label>
+                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('email_address')}</label>
                             {isEditing ? (
                                 <input 
-                                    value={editData.phone} 
-                                    onChange={e => setEditData({...editData, phone: e.target.value})}
-                                    placeholder="(6012-345-6789)"
+                                    type="email"
+                                    value={editData.email} 
+                                    onChange={e => setEditData({...editData, email: e.target.value})}
+                                    placeholder="m-xxxxxxxx@moe-dl.edu.my"
                                     className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db]"
                                 />
+                            ) : (
+                                <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.email || t('not_set')}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('phone_number')}</label>
+                            {isEditing ? (
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-xs text-[#3498db]">+6</span>
+                                    <input 
+                                        value={editData.phone} 
+                                        onChange={e => setEditData({...editData, phone: e.target.value.replace(/[^0-9]/g, '')})} 
+                                        placeholder="0123456789"
+                                        className="w-full p-3 pl-10 bg-gray-50 border-2 border-gray-100 rounded-xl font-bold text-xs outline-none focus:border-[#3498db] transition-all"
+                                    />
+                                </div>
                             ) : (
                                 <p className="font-bold text-[#2c3e50] bg-gray-50/50 p-3 rounded-xl border border-transparent">{user.phone || t('not_set')}</p>
                             )}
@@ -2884,7 +3009,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
     const [adminReply, setAdminReply] = useState('');
     const [selectedOffer, setSelectedOffer] = useState<any>(null);
     const [declineReason, setDeclineReason] = useState('');
-    const [approvalReason, setApprovalReason] = useState('');
+    const [offerApprovalReason, setOfferApprovalReason] = useState('');
     const [showDeclineModal, setShowDeclineModal] = useState(false);
     const [awardingPoints, setAwardingPoints] = useState<number>(0);
     const [isAwardingMode, setIsAwardingMode] = useState(false);
@@ -3057,7 +3182,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                     completedAt: firebase.firestore.FieldValue.serverTimestamp(), 
                     confirmedBy: user.uid, 
                     earnedPoints: awardingPoints,
-                    approvalReason: approvalReason.trim() || null
+                    approvalReason: offerApprovalReason.trim() || null
                 });
                 transaction.delete(db.collection('donations').doc(offer.id));
             });
@@ -3065,7 +3190,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             await db.collection('notifications').add({
                 userId: offer.userId,
                 title: t('points_earned_notif'),
-                message: `${t('verified')}! ${t('points_earned')}: ${awardingPoints}${approvalReason ? `\n\nReason: ${approvalReason}` : ''}`,
+                message: `${t('verified')}! ${t('points_earned')}: ${awardingPoints}${offerApprovalReason ? `\n\nReason: ${offerApprovalReason}` : ''}`,
                 type: 'status',
                 read: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3074,7 +3199,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
             alert(t('verified') + "!");
             setIsAwardingMode(false);
             setAwardingPoints(0);
-            setApprovalReason('');
+            setOfferApprovalReason('');
             setSelectedOffer(null);
         } catch (err: any) {
             alert(t('approval_failed'));
@@ -3310,8 +3435,8 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                         <div className="mt-4">
                                             <label className="text-[8px] font-black uppercase text-gray-400 tracking-widest ml-2">Reason (Optional)</label>
                                             <textarea 
-                                                value={approvalReason} 
-                                                onChange={e => setApprovalReason(e.target.value)} 
+                                                value={offerApprovalReason} 
+                                                onChange={e => setOfferApprovalReason(e.target.value)} 
                                                 className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none text-xs font-bold focus:border-[#2ecc71] transition-all"
                                                 placeholder="Type a reason for the points (optional)..."
                                                 rows={3}
@@ -3321,7 +3446,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                             <button onClick={() => approveOffer(selectedOffer)} className="flex-1 bg-[#2ecc71] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
                                                 {t('confirm')}
                                             </button>
-                                            <button onClick={() => { setIsAwardingMode(false); setApprovalReason(''); }} className="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl font-black uppercase text-xs">
+                                            <button onClick={() => { setIsAwardingMode(false); setOfferApprovalReason(''); }} className="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl font-black uppercase text-xs">
                                                 {t('cancel')}
                                             </button>
                                         </div>
