@@ -1870,11 +1870,11 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
 
                 onClose();
             } else if (currentMode === 'register') {
-                const finalUserClass = `${classLevel}${classSection}`;
+                const finalUserClass = classLevel === 'GURU' ? 'GURU' : `${classLevel}${classSection}`;
                 const formattedPhone = dataInput.phone.startsWith('60') ? dataInput.phone : `60${dataInput.phone.replace(/^0+/, '')}`;
 
                 // Validate all fields are filled
-                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !classLevel || !classSection) {
+                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !classLevel || (classLevel !== 'GURU' && !classSection)) {
                     const msg = t('fill_all_fields');
                     alert(msg);
                     throw new Error(msg);
@@ -2005,21 +2005,23 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('full_name_ic')}</label>
                                         <input placeholder="(Issac Newton)" value={data.name} onChange={e => setData({...data, name: e.target.value})} className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" required />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className={`${classLevel === 'GURU' ? 'grid-cols-1' : 'grid-cols-2'} grid gap-4`}>
                                         <CustomDropdown 
                                             label={t('class_level')} 
                                             value={classLevel} 
-                                            options={['1', '2', '3', '4', '5']} 
+                                            options={['1', '2', '3', '4', '5', 'GURU']} 
                                             onSelect={setClassLevel} 
                                             placeholder="Level"
                                         />
-                                        <CustomDropdown 
-                                            label={t('class_section')} 
-                                            value={classSection} 
-                                            options={['EINSTEIN', 'AVICENNA', 'NEWTON', 'HAWKING', 'AMANAH', 'BAKTI', 'CERGAS', 'DEDIKASI', 'ELOK', 'FASIH', 'GIGIH', 'HARMONI', 'EDISON']} 
-                                            onSelect={setClassSection} 
-                                            placeholder="Section"
-                                        />
+                                        {classLevel !== 'GURU' && (
+                                            <CustomDropdown 
+                                                label={t('class_section')} 
+                                                value={classSection} 
+                                                options={['EINSTEIN', 'AVICENNA', 'NEWTON', 'HAWKING', 'AMANAH', 'BAKTI', 'CERGAS', 'DEDIKASI', 'ELOK', 'FASIH', 'GIGIH', 'HARMONI', 'EDISON']} 
+                                                onSelect={setClassSection} 
+                                                placeholder="Section"
+                                            />
+                                        )}
                                     </div>
                                 </div>
 
@@ -2111,8 +2113,13 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
             });
 
             if (user.userClass) {
-                setClassLevel(user.userClass[0]);
-                setClassSection(user.userClass.substring(1));
+                if (user.userClass === 'GURU') {
+                    setClassLevel('GURU');
+                    setClassSection('');
+                } else {
+                    setClassLevel(user.userClass[0]);
+                    setClassSection(user.userClass.substring(1));
+                }
             }
         }
     }, [user, isEditing]);
@@ -2123,7 +2130,7 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
         if (!editData || !user || typeof firebase === 'undefined' || !firebase.firestore) return;
         setSaving(true);
         try {
-            const finalUserClass = `${classLevel}${classSection}`;
+            const finalUserClass = classLevel === 'GURU' ? 'GURU' : `${classLevel}${classSection}`;
             const formattedPhone = editData.phone.startsWith('60') ? editData.phone : `60${editData.phone.replace(/^0+/, '')}`;
 
             // Check if email changed
@@ -2209,21 +2216,23 @@ const ProfilePage: React.FC<{user: any | null, t: any, onAuth: () => void, onNav
                                 className="w-full bg-white/10 border-2 border-white/20 rounded-xl p-3 text-white font-black text-center placeholder:text-white/40 outline-none focus:border-[#3498db] transition-all"
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className={`${classLevel === 'GURU' ? 'grid-cols-1' : 'grid-cols-2'} grid gap-4`}>
                             <CustomDropdown 
                                 label={t('class_level')} 
                                 value={classLevel} 
-                                options={['1', '2', '3', '4', '5']} 
+                                options={['1', '2', '3', '4', '5', 'GURU']} 
                                 onSelect={setClassLevel} 
                                 placeholder="Level"
                             />
-                            <CustomDropdown 
-                                label={t('class_section')} 
-                                value={classSection} 
-                                options={['EINSTEIN', 'AVICENNA', 'NEWTON', 'HAWKING', 'AMANAH', 'BAKTI', 'CERGAS', 'DEDIKASI', 'ELOK', 'FASIH', 'GIGIH', 'HARMONI', 'EDISON']} 
-                                onSelect={setClassSection} 
-                                placeholder="Section"
-                            />
+                            {classLevel !== 'GURU' && (
+                                <CustomDropdown 
+                                    label={t('class_section')} 
+                                    value={classSection} 
+                                    options={['EINSTEIN', 'AVICENNA', 'NEWTON', 'HAWKING', 'AMANAH', 'BAKTI', 'CERGAS', 'DEDIKASI', 'ELOK', 'FASIH', 'GIGIH', 'HARMONI', 'EDISON']} 
+                                    onSelect={setClassSection} 
+                                    placeholder="Section"
+                                />
+                            )}
                         </div>
                     </div>
                 ) : (
