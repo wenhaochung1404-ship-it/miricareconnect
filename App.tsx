@@ -823,12 +823,12 @@ export const App: React.FC = () => {
 
                                 if (data.lastRewardDate !== currentRewardDay && !isAwardingRewardRef.current && !isHardcodedAdmin && !isKoperasi) {
                                     isAwardingRewardRef.current = true;
-                                    const newPoints = (data.points || 0) + 5;
+                                    const newPoints = (data.points || 0) + 10;
                                     await db.collection('users').doc(authUser.uid).update({
                                         points: newPoints,
                                         lastRewardDate: currentRewardDay
                                     }).then(() => {
-                                        alert("Daily Reward: You've received 5 points for logging in today! 🎉");
+                                        alert("Daily Reward: You've received 10 points for logging in today! 🎉");
                                     }).catch(err => console.error("Reward error", err))
                                     .finally(() => {
                                         isAwardingRewardRef.current = false;
@@ -842,7 +842,7 @@ export const App: React.FC = () => {
                                     uid: authUser.uid, 
                                     email: authUser.email, 
                                     displayName: isHardcodedAdmin ? 'System Admin' : (isKoperasi ? 'Koperasi' : 'Guest'),
-                                    points: 5, 
+                                    points: 10, 
                                     isAdmin: isHardcodedAdmin, 
                                     isKoperasi: isKoperasi,
                                     lastRewardDate: currentRewardDay
@@ -1916,7 +1916,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                     const rewardDateObj = new Date(now.getTime() - 60000);
                     const currentRewardDay = `${rewardDateObj.getFullYear()}-${String(rewardDateObj.getMonth() + 1).padStart(2, '0')}-${String(rewardDateObj.getDate()).padStart(2, '0')}`;
                     const userData = { 
-                        email: dataInput.email, displayName: dataInput.name, points: 5, birthdate: dataInput.birthdate, 
+                        email: dataInput.email, displayName: dataInput.name, points: 10, birthdate: dataInput.birthdate, 
                         phone: formattedPhone, userClass: finalUserClass, 
                         isAdmin: dataInput.email === 'admin@gmail.com',
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
