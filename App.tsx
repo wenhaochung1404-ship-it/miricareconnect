@@ -648,6 +648,7 @@ export const App: React.FC = () => {
     }, []);
 
     const isSyncingRef = useRef(false);
+    const isAwardingRewardRef = useRef(false);
     // 1. Function to log Redemptions
     const syncRedemption = async (user: any, itemName: string) => {
         try {
@@ -814,14 +815,37 @@ export const App: React.FC = () => {
                                     // Sync to Google Sheets
                                     syncNewUser(updatedData);
                                 }
+
+                                // DAILY REWARD LOGIC
+                                const now = new Date();
+                                const rewardDateObj = new Date(now.getTime() - 60000); // 12:01 AM reset
+                                const currentRewardDay = `${rewardDateObj.getFullYear()}-${String(rewardDateObj.getMonth() + 1).padStart(2, '0')}-${String(rewardDateObj.getDate()).padStart(2, '0')}`;
+
+                                if (data.lastRewardDate !== currentRewardDay && !isAwardingRewardRef.current && !isHardcodedAdmin && !isKoperasi) {
+                                    isAwardingRewardRef.current = true;
+                                    const newPoints = (data.points || 0) + 5;
+                                    await db.collection('users').doc(authUser.uid).update({
+                                        points: newPoints,
+                                        lastRewardDate: currentRewardDay
+                                    }).then(() => {
+                                        alert("Daily Reward: You've received 5 points for logging in today! 🎉");
+                                    }).catch(err => console.error("Reward error", err))
+                                    .finally(() => {
+                                        isAwardingRewardRef.current = false;
+                                    });
+                                }
                             } else {
+                                const now = new Date();
+                                const rewardDateObj = new Date(now.getTime() - 60000);
+                                const currentRewardDay = `${rewardDateObj.getFullYear()}-${String(rewardDateObj.getMonth() + 1).padStart(2, '0')}-${String(rewardDateObj.getDate()).padStart(2, '0')}`;
                                 const profile = { 
                                     uid: authUser.uid, 
                                     email: authUser.email, 
                                     displayName: isHardcodedAdmin ? 'System Admin' : (isKoperasi ? 'Koperasi' : 'Guest'),
                                     points: 5, 
                                     isAdmin: isHardcodedAdmin, 
-                                    isKoperasi: isKoperasi 
+                                    isKoperasi: isKoperasi,
+                                    lastRewardDate: currentRewardDay
                                 };
                                 await db.collection('users').doc(authUser.uid).set(profile);
                                 setUser(profile as any);
@@ -1888,6 +1912,9 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 const {user} = await firebase.auth().createUserWithEmailAndPassword(dataInput.email, dataInput.password);
                 
                 if (user) {
+                    const now = new Date();
+                    const rewardDateObj = new Date(now.getTime() - 60000);
+                    const currentRewardDay = `${rewardDateObj.getFullYear()}-${String(rewardDateObj.getMonth() + 1).padStart(2, '0')}-${String(rewardDateObj.getDate()).padStart(2, '0')}`;
                     const userData = { 
                         email: dataInput.email, displayName: dataInput.name, points: 5, birthdate: dataInput.birthdate, 
                         phone: formattedPhone, userClass: finalUserClass, 
@@ -1895,7 +1922,8 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                         isKoperasi: dataInput.email === 'koperasi@gmail.com',
                         password: dataInput.password,
                         status: 'Verified',
-                        secondCheck: '(verified)'
+                        secondCheck: '(verified)',
+                        lastRewardDate: currentRewardDay
                     };
                     await firebase.firestore().collection('users').doc(user.uid).set(userData);
                     await onRegisterSuccess(userData);
