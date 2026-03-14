@@ -501,6 +501,250 @@ Nota Penting:
 Miri Care Connect bisi tuju deka ngansak penyiru, ngurangka pengerusak, enggau nyukung sida ti begunaka bantu nengah sistem pemeri ti telus enggau bermakna.`
 };
 
+const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
+    const [posts, setPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
+    const [title, setTitle] = useState("");
+    const [photoLinks, setPhotoLinks] = useState<string[]>([""]);
+    const [showModal, setShowModal] = useState(false);
+
+    const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
+
+    useEffect(() => {
+        if (typeof firebase === 'undefined' || !firebase.firestore) return;
+        const unsubscribe = firebase.firestore().collection('photo_channel')
+            .orderBy('createdAt', 'desc')
+            .onSnapshot((snapshot: any) => {
+                const docs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+                setPosts(docs);
+                setLoading(false);
+            }, (err: any) => {
+                console.error("Photo Channel Error:", err);
+                setLoading(false);
+            });
+        return () => unsubscribe();
+    }, []);
+
+    const addLinkField = () => {
+        setPhotoLinks([...photoLinks, ""]);
+    };
+
+    const updateLinkField = (index: number, value: string) => {
+        const newLinks = [...photoLinks];
+        newLinks[index] = value;
+        setPhotoLinks(newLinks);
+    };
+
+    const removeLinkField = (index: number) => {
+        if (photoLinks.length > 1) {
+            setPhotoLinks(photoLinks.filter((_, i) => i !== index));
+        }
+    };
+
+    const handlePost = async () => {
+        if (!user || !isAdmin) return;
+
+        const validLinks = photoLinks.filter(link => link.trim() !== "");
+        if (validLinks.length === 0) {
+            alert("Please provide at least one photo link.");
+            return;
+        }
+
+        if (!title.trim()) {
+            alert("Please provide a title/category for the post.");
+            return;
+        }
+
+        setUploading(true);
+        try {
+            await firebase.firestore().collection('photo_channel').add({
+                imageUrls: validLinks,
+                title,
+                userId: user.uid,
+                userName: user.displayName || user.name || 'Anonymous',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            setTitle("");
+            setPhotoLinks([""]);
+            setShowModal(false);
+            alert("Post created successfully!");
+        } catch (err: any) {
+            console.error("Post Error:", err);
+            alert("Failed to create post: " + err.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+            <div className="flex items-center justify-between gap-6">
+                <div className="flex-1">
+                    <h2 className="text-3xl font-black uppercase italic text-[#2c3e50] tracking-tighter">
+                        {t('photo_channel')}
+                    </h2>
+                    <p className="text-[10px] font-bold text-[#3498db] uppercase tracking-[0.3em] mt-1">
+                        Official Updates and Community Moments
+                    </p>
+                </div>
+                
+                {isAdmin && (
+                    <button 
+                        onClick={() => setShowModal(true)}
+                        className="w-14 h-14 bg-[#3498db] text-white rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center text-2xl"
+                    >
+                        <i className="fas fa-plus"></i>
+                    </button>
+                )}
+            </div>
+
+            {/* Upload Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-2xl font-black uppercase italic text-[#2c3e50]">New Post</h3>
+                                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 p-2">
+                                    <i className="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Category / Title</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g., Event, Announcement..." 
+                                        value={title} 
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2 flex justify-between items-center">
+                                        Photo Links
+                                        <button onClick={addLinkField} className="text-[#3498db] hover:text-blue-600 transition-colors">
+                                            <i className="fas fa-plus-circle text-lg"></i>
+                                        </button>
+                                    </label>
+                                    {photoLinks.map((link, index) => (
+                                        <div key={index} className="flex gap-2">
+                                            <input 
+                                                type="url" 
+                                                placeholder="https://example.com/photo.jpg" 
+                                                value={link} 
+                                                onChange={(e) => updateLinkField(index, e.target.value)}
+                                                className="flex-1 p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                            />
+                                            {photoLinks.length > 1 && (
+                                                <button onClick={() => removeLinkField(index)} className="text-red-400 hover:text-red-500 p-2">
+                                                    <i className="fas fa-minus-circle"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={handlePost}
+                                disabled={uploading}
+                                className="w-full bg-[#3498db] text-white px-6 py-5 rounded-[2rem] font-black uppercase text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {uploading ? (
+                                    <i className="fas fa-spinner fa-spin"></i>
+                                ) : (
+                                    <i className="fas fa-paper-plane"></i>
+                                )}
+                                {uploading ? "Posting..." : "Post to Channel"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-[#3498db]">
+                    <i className="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                    <span className="font-black uppercase italic text-xs">Loading Channel...</span>
+                </div>
+            ) : posts.length === 0 ? (
+                <div className="bg-white p-12 rounded-[3rem] shadow-xl text-center border-4 border-dashed border-gray-100">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300 text-3xl mb-4">
+                        <i className="fas fa-images"></i>
+                    </div>
+                    <h3 className="text-xl font-black uppercase italic text-[#2c3e50] mb-2">No Posts Yet</h3>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Official updates will appear here</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {posts.map((post) => (
+                        <motion.div 
+                            key={post.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100 group flex flex-col"
+                        >
+                            <div className="p-5 flex items-center justify-between bg-gray-50/50 border-b border-gray-100">
+                                <span className="bg-[#3498db] text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
+                                    {post.title || 'General'}
+                                </span>
+                                {(user?.isAdmin || user?.email === 'admin@gmail.com') && (
+                                    <button 
+                                        onClick={async () => {
+                                            if (window.confirm("Delete this post?")) {
+                                                try {
+                                                    await firebase.firestore().collection('photo_channel').doc(post.id).delete();
+                                                } catch (err: any) {
+                                                    alert("Delete failed: " + err.message);
+                                                }
+                                            }
+                                        }}
+                                        className="text-red-400 hover:text-red-600 transition-colors"
+                                    >
+                                        <i className="fas fa-trash-alt text-xs"></i>
+                                    </button>
+                                )}
+                            </div>
+                            
+                            <div className="flex flex-col">
+                                {(post.imageUrls || [post.imageUrl]).map((url: string, idx: number) => (
+                                    <div key={idx} className="aspect-square relative overflow-hidden bg-gray-100 border-b border-gray-50 last:border-b-0">
+                                        <img 
+                                            src={url} 
+                                            alt={`${post.title} - ${idx + 1}`} 
+                                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                            referrerPolicy="no-referrer"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="p-6 flex-1 flex flex-col justify-between">
+                                <div className="flex items-center gap-2 pt-2">
+                                    <div className="w-8 h-8 bg-[#3498db] rounded-full flex items-center justify-center text-white text-[10px] font-black uppercase">
+                                        {post.userName?.charAt(0) || '?'}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black uppercase text-[#2c3e50]">{post.userName}</span>
+                                        <span className="text-[8px] font-bold text-gray-400 uppercase">
+                                            {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString() : 'Just now'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const HomePage: React.FC<{ t: any, user: any, lang: Language }> = ({ t, user, lang }) => {
     // Announcement state removed as we use hardcoded content now
     // Guide state removed as we use hardcoded content now
@@ -1582,6 +1826,7 @@ export const App: React.FC = () => {
                 <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isAdmin && showAdminPanel ? 'lg:mr-80' : ''}`}>
                     <div className="container mx-auto px-4 py-8 max-w-6xl">
                         {page === 'home' && !isKoperasi && <HomePage t={t} user={user} lang={lang} />}
+                        {page === 'photo_channel' && !isKoperasi && <PhotoChannelPage t={t} user={user} />}
                         {page === 'gallery' && !isKoperasi && <OffersPage t={t} user={user} />}
                         {page === 'profile' && !isKoperasi && <ProfilePage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onNavigate={() => {}} onUpdateUser={syncNewUser} />}
                         {page === 'shop' && <ShopPage user={user} t={t} onAuth={() => setIsAuthModalOpen(true)} onRedeemConfirm={setItemToRedeem} sheetInventory={sheetInventory} />}
@@ -1617,6 +1862,7 @@ export const App: React.FC = () => {
                         {!isKoperasi ? (
                             <>
                                 <MenuItem icon="bullhorn" label={t('home')} onClick={() => { setPage('home'); setIsMenuOpen(false); }} active={page === 'home'} />
+                                <MenuItem icon="camera" label={t('photo_channel')} onClick={() => { setPage('photo_channel'); setIsMenuOpen(false); }} active={page === 'photo_channel'} />
                                 <MenuItem icon="hand-holding-heart" label={t('offers')} onClick={() => { setPage('gallery'); setIsMenuOpen(false); }} active={page === 'gallery'} />
                                 <MenuItem icon="user" label={t('profile')} onClick={() => { setPage('profile'); setIsMenuOpen(false); }} active={page === 'profile'} />
                                 <MenuItem icon="shopping-cart" label={t('points_shop')} onClick={() => { setPage('shop'); setIsMenuOpen(false); }} active={page === 'shop'} />
