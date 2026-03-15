@@ -508,6 +508,7 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
     const [title, setTitle] = useState("");
     const [photoLinks, setPhotoLinks] = useState<string[]>([""]);
     const [showModal, setShowModal] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<any>(null);
 
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
 
@@ -690,7 +691,7 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                             className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100 group flex flex-col"
                         >
                             <div className="p-5 flex items-center justify-between bg-gray-50/50 border-b border-gray-100">
-                                <span className="bg-[#3498db] text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
+                                <span className="bg-[#3498db] text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
                                     {post.title || 'General'}
                                 </span>
                                 {(user?.isAdmin || user?.email === 'admin@gmail.com') && (
@@ -711,34 +712,51 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                 )}
                             </div>
                             
-                            <div className="flex flex-col">
-                                {(post.imageUrls || [post.imageUrl]).map((url: string, idx: number) => (
-                                    <div key={idx} className="aspect-square relative overflow-hidden bg-gray-100 border-b border-gray-50 last:border-b-0">
-                                        <img 
-                                            src={url} 
-                                            alt={`${post.title} - ${idx + 1}`} 
-                                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                                            referrerPolicy="no-referrer"
-                                        />
+                            <div 
+                                className="aspect-square relative overflow-hidden bg-gray-100 cursor-pointer"
+                                onClick={() => setSelectedPost(post)}
+                            >
+                                <img 
+                                    src={(post.imageUrls || [post.imageUrl])[0]} 
+                                    alt={post.title} 
+                                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                    referrerPolicy="no-referrer"
+                                />
+                                {(post.imageUrls?.length > 1) && (
+                                    <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-lg text-[10px] font-bold backdrop-blur-sm">
+                                        <i className="fas fa-layer-group mr-1"></i>
+                                        {post.imageUrls.length}
                                     </div>
-                                ))}
+                                )}
                             </div>
 
                             <div className="p-6 flex-1 flex flex-col justify-between">
-                                <div className="flex items-center gap-2 pt-2">
-                                    <div className="w-8 h-8 bg-[#3498db] rounded-full flex items-center justify-center text-white text-[10px] font-black uppercase">
-                                        {post.userName?.charAt(0) || '?'}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black uppercase text-[#2c3e50]">{post.userName}</span>
-                                        <span className="text-[8px] font-bold text-gray-400 uppercase">
-                                            {post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString() : 'Just now'}
-                                        </span>
-                                    </div>
-                                </div>
                             </div>
                         </motion.div>
                     ))}
+                </div>
+            )}
+            {selectedPost && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setSelectedPost(null)}>
+                    <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 flex items-center justify-between border-b border-gray-100">
+                            <h3 className="text-xl font-black uppercase italic text-[#2c3e50]">{selectedPost.title}</h3>
+                            <button onClick={() => setSelectedPost(null)} className="text-gray-400 hover:text-gray-600 p-2">
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {(selectedPost.imageUrls || [selectedPost.imageUrl]).map((url: string, idx: number) => (
+                                <img 
+                                    key={idx}
+                                    src={url} 
+                                    alt={`${selectedPost.title} - ${idx + 1}`} 
+                                    className="w-full h-auto rounded-2xl shadow-lg"
+                                    referrerPolicy="no-referrer"
+                                />
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
