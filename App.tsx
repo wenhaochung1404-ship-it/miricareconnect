@@ -506,9 +506,14 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
     const [photoLinks, setPhotoLinks] = useState<string[]>([""]);
     const [showModal, setShowModal] = useState(false);
     const [selectedPost, setSelectedPost] = useState<any>(null);
+    const [editPost, setEditPost] = useState<any>(null);
+    const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editPhotoLinks, setEditPhotoLinks] = useState<string[]>([""]);
 
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
 
@@ -562,12 +567,14 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
             await firebase.firestore().collection('photo_channel').add({
                 imageUrls: validLinks,
                 title,
+                description,
                 userId: user.uid,
                 userName: user.displayName || user.name || 'Anonymous',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
             setTitle("");
+            setDescription("");
             setPhotoLinks([""]);
             setShowModal(false);
             alert("Post created successfully!");
@@ -622,6 +629,16 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                         value={title} 
                                         onChange={(e) => setTitle(e.target.value)}
                                         className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Description</label>
+                                    <textarea 
+                                        placeholder="Add a description..." 
+                                        value={description} 
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                        rows={3}
                                     />
                                 </div>
 
@@ -695,20 +712,33 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                     {post.title || 'General'}
                                 </span>
                                 {(user?.isAdmin || user?.email === 'admin@gmail.com') && (
-                                    <button 
-                                        onClick={async () => {
-                                            if (window.confirm("Delete this post?")) {
-                                                try {
-                                                    await firebase.firestore().collection('photo_channel').doc(post.id).delete();
-                                                } catch (err: any) {
-                                                    alert("Delete failed: " + err.message);
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => {
+                                                setEditPost(post);
+                                                setEditTitle(post.title);
+                                                setEditDescription(post.description || "");
+                                                setEditPhotoLinks(post.imageUrls || [post.imageUrl]);
+                                            }}
+                                            className="text-blue-400 hover:text-blue-600 transition-colors"
+                                        >
+                                            <i className="fas fa-edit text-xs"></i>
+                                        </button>
+                                        <button 
+                                            onClick={async () => {
+                                                if (window.confirm("Delete this post?")) {
+                                                    try {
+                                                        await firebase.firestore().collection('photo_channel').doc(post.id).delete();
+                                                    } catch (err: any) {
+                                                        alert("Delete failed: " + err.message);
+                                                    }
                                                 }
-                                            }
-                                        }}
-                                        className="text-red-400 hover:text-red-600 transition-colors"
-                                    >
-                                        <i className="fas fa-trash-alt text-xs"></i>
-                                    </button>
+                                            }}
+                                            className="text-red-400 hover:text-red-600 transition-colors"
+                                        >
+                                            <i className="fas fa-trash-alt text-xs"></i>
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                             
@@ -731,9 +761,96 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                             </div>
 
                             <div className="p-6 flex-1 flex flex-col justify-between">
+                                <p className="text-sm text-gray-600 font-medium">{post.description}</p>
                             </div>
                         </motion.div>
                     ))}
+                </div>
+            )}
+            {editPost && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-2xl font-black uppercase italic text-[#2c3e50]">Edit Post</h3>
+                                <button onClick={() => setEditPost(null)} className="text-gray-400 hover:text-gray-600 p-2">
+                                    <i className="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Category / Title</label>
+                                    <input 
+                                        type="text" 
+                                        value={editTitle} 
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Description</label>
+                                    <textarea 
+                                        value={editDescription} 
+                                        onChange={(e) => setEditDescription(e.target.value)}
+                                        className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                        rows={3}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2 flex justify-between items-center">
+                                        Photo Links
+                                        <button onClick={() => setEditPhotoLinks([...editPhotoLinks, ""])} className="text-[#3498db] hover:text-blue-600 transition-colors">
+                                            <i className="fas fa-plus-circle text-lg"></i>
+                                        </button>
+                                    </label>
+                                    {editPhotoLinks.map((link, index) => (
+                                        <div key={index} className="flex gap-2">
+                                            <input 
+                                                type="url" 
+                                                value={link} 
+                                                onChange={(e) => {
+                                                    const newLinks = [...editPhotoLinks];
+                                                    newLinks[index] = e.target.value;
+                                                    setEditPhotoLinks(newLinks);
+                                                }}
+                                                className="flex-1 p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                            />
+                                            {editPhotoLinks.length > 1 && (
+                                                <button onClick={() => setEditPhotoLinks(editPhotoLinks.filter((_, i) => i !== index))} className="text-red-400 hover:text-red-500 p-2">
+                                                    <i className="fas fa-minus-circle"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={async () => {
+                                    setUploading(true);
+                                    try {
+                                        await firebase.firestore().collection('photo_channel').doc(editPost.id).update({
+                                            imageUrls: editPhotoLinks.filter(l => l.trim() !== ""),
+                                            title: editTitle,
+                                            description: editDescription
+                                        });
+                                        setEditPost(null);
+                                        alert("Post updated successfully!");
+                                    } catch (err: any) {
+                                        alert("Failed to update post: " + err.message);
+                                    } finally {
+                                        setUploading(false);
+                                    }
+                                }}
+                                disabled={uploading}
+                                className="w-full bg-[#3498db] text-white px-6 py-5 rounded-[2rem] font-black uppercase text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {uploading ? "Updating..." : "Update Post"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
             {selectedPost && (
@@ -3302,8 +3419,9 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
     const isKoperasi = user?.isKoperasi || user?.email === 'koperasi@gmail.com';
 
-    const [activeTab, setActiveTab] = useState<'users' | 'items' | 'vouchers' | 'chats' | 'announcement'>(isKoperasi ? 'vouchers' : 'users');
+    const [activeTab, setActiveTab] = useState<'users' | 'items' | 'vouchers' | 'chats' | 'announcement' | 'points'>(isKoperasi ? 'vouchers' : 'users');
     const [data, setData] = useState<{users: any[], items: any[], redemptions: any[], completedItems: any[], supportChats: any[], announcement: any}>({users: [], items: [], redemptions: [], completedItems: [], supportChats: [], announcement: null});
+    const [pointTransactions, setPointTransactions] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [editingUser, setEditingUser] = useState<any>(null);
     const [activeSupportUser, setActiveSupportUser] = useState<any>(null);
@@ -3376,6 +3494,19 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
 
         return () => unsubs.forEach(u => u());
     }, [isAdmin]);
+
+    useEffect(() => {
+        if (activeTab === 'points') {
+            const db = firebase.firestore();
+            const unsubscribe = db.collection('point_transactions')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    const transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setPointTransactions(transactions);
+                });
+            return () => unsubscribe();
+        }
+    }, [activeTab]);
 
     const filteredUsers = useMemo(() => {
         if (!searchQuery) return data.users;
@@ -3485,6 +3616,14 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                     earnedPoints: awardingPoints,
                     approvalReason: offerApprovalReason.trim() || null
                 });
+                transaction.set(db.collection('point_transactions').doc(), {
+                    userId: offer.userId,
+                    awardedBy: user.uid,
+                    points: awardingPoints,
+                    reason: offerApprovalReason.trim() || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    donationId: offer.id
+                });
                 transaction.delete(db.collection('donations').doc(offer.id));
             });
 
@@ -3592,6 +3731,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                         <button onClick={() => { setActiveTab('items'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'items' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>{t('offers')}</button>
                         <button onClick={() => { setActiveTab('chats'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'chats' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>{t('support')}</button>
                         <button onClick={() => { setActiveTab('announcement'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'announcement' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>Popup</button>
+                        <button onClick={() => { setActiveTab('points'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'points' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>Points</button>
                     </>
                 )}
             </div>
@@ -3932,6 +4072,20 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 Save Settings
                             </button>
                         </div>
+                    </div>
+                )}
+                {activeTab === 'points' && isAdmin && (
+                    <div className="space-y-2">
+                        {pointTransactions.length === 0 ? <p className="text-[10px] text-gray-300 italic px-1">{t('nothing_here')}</p> : pointTransactions.map(t => (
+                            <div key={t.id} className="bg-white p-4 border border-gray-100 rounded-2xl">
+                                <div className="flex justify-between items-center">
+                                    <div className="font-black text-[11px] text-[#2c3e50]">{t.userId}</div>
+                                    <div className="font-black text-[11px] text-[#f39c12]">+{t.points} pts</div>
+                                </div>
+                                <div className="text-[10px] text-gray-400 mt-1 font-medium italic">{t.reason || 'No reason provided'}</div>
+                                <div className="text-[8px] text-gray-300 mt-1">{t.createdAt?.toDate().toLocaleString()}</div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
