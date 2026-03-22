@@ -707,39 +707,42 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100 group flex flex-col"
                         >
-                            <div className="p-5 flex items-center justify-between bg-gray-50/50 border-b border-gray-100">
-                                <span className="bg-[#3498db] text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
-                                    {post.title || 'General'}
-                                </span>
-                                {(user?.isAdmin || user?.email === 'admin@gmail.com') && (
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => {
-                                                setEditPost(post);
-                                                setEditTitle(post.title);
-                                                setEditDescription(post.description || "");
-                                                setEditPhotoLinks(post.imageUrls || [post.imageUrl]);
-                                            }}
-                                            className="text-blue-400 hover:text-blue-600 transition-colors"
-                                        >
-                                            <i className="fas fa-edit text-xs"></i>
-                                        </button>
-                                        <button 
-                                            onClick={async () => {
-                                                if (window.confirm("Delete this post?")) {
-                                                    try {
-                                                        await firebase.firestore().collection('photo_channel').doc(post.id).delete();
-                                                    } catch (err: any) {
-                                                        alert("Delete failed: " + err.message);
+                            <div className="p-5 bg-gray-50/50 border-b border-gray-100">
+                                <div className="flex items-center justify-between">
+                                    <span className="bg-[#3498db] text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
+                                        {post.title || 'General'}
+                                    </span>
+                                    {(user?.isAdmin || user?.email === 'admin@gmail.com') && (
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setEditPost(post);
+                                                    setEditTitle(post.title);
+                                                    setEditDescription(post.description || "");
+                                                    setEditPhotoLinks(post.imageUrls || [post.imageUrl]);
+                                                }}
+                                                className="text-blue-400 hover:text-blue-600 transition-colors"
+                                            >
+                                                <i className="fas fa-edit text-xs"></i>
+                                            </button>
+                                            <button 
+                                                onClick={async () => {
+                                                    if (window.confirm("Delete this post?")) {
+                                                        try {
+                                                            await firebase.firestore().collection('photo_channel').doc(post.id).delete();
+                                                        } catch (err: any) {
+                                                            alert("Delete failed: " + err.message);
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                            className="text-red-400 hover:text-red-600 transition-colors"
-                                        >
-                                            <i className="fas fa-trash-alt text-xs"></i>
-                                        </button>
-                                    </div>
-                                )}
+                                                }}
+                                                className="text-red-400 hover:text-red-600 transition-colors"
+                                            >
+                                                <i className="fas fa-trash-alt text-xs"></i>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                {post.description && <p className="text-sm text-gray-600 font-medium mt-3">{post.description}</p>}
                             </div>
                             
                             <div 
@@ -761,7 +764,6 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                             </div>
 
                             <div className="p-6 flex-1 flex flex-col justify-between">
-                                <p className="text-sm text-gray-600 font-medium">{post.description}</p>
                             </div>
                         </motion.div>
                     ))}
@@ -3419,7 +3421,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
     const isAdmin = user?.isAdmin || user?.email === 'admin@gmail.com';
     const isKoperasi = user?.isKoperasi || user?.email === 'koperasi@gmail.com';
 
-    const [activeTab, setActiveTab] = useState<'users' | 'items' | 'vouchers' | 'chats' | 'announcement' | 'points'>(isKoperasi ? 'vouchers' : 'users');
+    const [activeTab, setActiveTab] = useState<'users' | 'items' | 'vouchers' | 'chats' | 'announcement' | 'points' | 'history'>(isKoperasi ? 'vouchers' : 'users');
     const [data, setData] = useState<{users: any[], items: any[], redemptions: any[], completedItems: any[], supportChats: any[], announcement: any}>({users: [], items: [], redemptions: [], completedItems: [], supportChats: [], announcement: null});
     const [pointTransactions, setPointTransactions] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -3732,6 +3734,7 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                         <button onClick={() => { setActiveTab('chats'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'chats' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>{t('support')}</button>
                         <button onClick={() => { setActiveTab('announcement'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'announcement' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>Popup</button>
                         <button onClick={() => { setActiveTab('points'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'points' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>Points</button>
+                        <button onClick={() => { setActiveTab('history'); setEditingUser(null); setActiveSupportUser(null); setSelectedOffer(null); }} className={`flex-1 min-w-[60px] py-2 rounded-xl text-[7px] font-black uppercase ${activeTab === 'history' ? 'bg-[#2c3e50] text-white' : 'bg-gray-100'}`}>History</button>
                     </>
                 )}
             </div>
@@ -4084,6 +4087,36 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 </div>
                                 <div className="text-[10px] text-gray-400 mt-1 font-medium italic">{t.reason || 'No reason provided'}</div>
                                 <div className="text-[8px] text-gray-300 mt-1">{t.createdAt?.toDate().toLocaleString()}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {activeTab === 'history' && isAdmin && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Redemption History</h3>
+                            <button 
+                                onClick={async () => {
+                                    if (!window.confirm("Are you sure you want to delete all redemption history?")) return;
+                                    const db = firebase.firestore();
+                                    const batch = db.batch();
+                                    data.redemptions.forEach(r => batch.delete(db.collection('redeem_history').doc(r.id)));
+                                    await batch.commit();
+                                    alert("History cleared!");
+                                }}
+                                className="bg-red-500 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 transition-all"
+                            >
+                                Delete All
+                            </button>
+                        </div>
+                        {data.redemptions.length === 0 ? <p className="text-[10px] text-gray-300 italic px-1">{t('nothing_here')}</p> : data.redemptions.map(r => (
+                            <div key={r.id} className="bg-white p-4 border border-gray-100 rounded-2xl">
+                                <div className="flex justify-between items-center">
+                                    <div className="font-black text-[11px] text-[#2c3e50]">{r.userName}</div>
+                                    <div className="font-black text-[11px] text-[#3498db]">{r.itemName}</div>
+                                </div>
+                                <div className="text-[10px] text-gray-400 mt-1 font-medium italic">Code: {r.rdCode} | Status: {r.status}</div>
+                                <div className="text-[8px] text-gray-300 mt-1">{r.redeemedAt?.toDate().toLocaleString()}</div>
                             </div>
                         ))}
                     </div>
