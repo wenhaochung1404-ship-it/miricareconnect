@@ -699,7 +699,7 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Official updates will appear here</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 gap-8 max-w-2xl mx-auto w-full">
                     {posts.map((post) => (
                         <motion.div 
                             key={post.id}
@@ -742,7 +742,7 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                         </div>
                                     )}
                                 </div>
-                                {post.description && <p className="text-sm text-gray-600 font-medium mt-3">{post.description}</p>}
+                                {post.description && <p className="text-sm text-gray-600 font-medium mt-3 whitespace-pre-wrap">{post.description}</p>}
                             </div>
                             
                             <div 
