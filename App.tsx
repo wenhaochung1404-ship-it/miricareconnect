@@ -2446,10 +2446,19 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                         secondCheck: '(verified)',
                         lastRewardDate: currentRewardDay
                     };
-                    await firebase.firestore().collection('users').doc(user.uid).set(userData, {merge: true});
-                    await onRegisterSuccess(userData);
-                    alert(t('register_success'));
-                    onClose();
+                    console.log("Submitting user data for registration", userData);
+                    try {
+                        console.log("Before Firestore Set");
+                        await firebase.firestore().collection('users').doc(user.uid).set(userData, {merge: true});
+                        console.log("After Firestore Set");
+                        await onRegisterSuccess(userData);
+                        console.log("After Register Success");
+                        alert(t('register_success'));
+                        onClose();
+                    } catch (err: any) {
+                        console.error("Firestore Error in registration:", err);
+                        throw err;
+                    }
                 }
             }
         } catch (err: any) { setError(err.message); } finally { setLoading(false); }
@@ -2633,6 +2642,12 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                                     </div>
                                 </div>
                             </>
+                        )}
+                        
+                        {error && (
+                            <div className="bg-red-100 text-red-600 p-4 rounded-xl text-xs font-bold my-4">
+                                {error}
+                            </div>
                         )}
                         
                         <button 
