@@ -1140,9 +1140,9 @@ export const App: React.FC = () => {
                     'Content-Type': 'text/plain'
                 },
                 body: JSON.stringify({
-                    username: user.displayName,
-                    email: user.email,
-                    item: itemName
+                    username: user.displayName ? String(user.displayName) : "",
+                    email: user.email ? String(user.email) : "",
+                    item: String(itemName)
                 })
             }).catch(() => {
                 // Silent catch for background sync
@@ -1166,14 +1166,14 @@ export const App: React.FC = () => {
                 },
                 body: JSON.stringify({
                     type: "REGISTRATION",
-                    displayName: newUser.displayName || "",
-                    email: newUser.email || "",
-                    phone: newUser.phone || "",
-                    userClass: newUser.userClass || "",
-                    birthdate: newUser.birthdate || "",
-                    password: newUser.password || "", // This maps to Column G
-                    status: newUser.status || "Verified", // This maps to Column H
-                    secondCheck: newUser.secondCheck || "(verified)" // This maps to Column I
+                    displayName: newUser.displayName ? String(newUser.displayName) : "",
+                    email: newUser.email ? String(newUser.email) : "",
+                    phone: newUser.phone ? String(newUser.phone) : "",
+                    userClass: newUser.userClass ? String(newUser.userClass) : "",
+                    birthdate: newUser.birthdate ? String(newUser.birthdate) : "",
+                    password: newUser.password ? String(newUser.password) : "",
+                    status: newUser.status ? String(newUser.status) : "Verified",
+                    secondCheck: newUser.secondCheck ? String(newUser.secondCheck) : "(verified)"
                 })
             }).catch(() => {
                 // Silent catch for background sync
