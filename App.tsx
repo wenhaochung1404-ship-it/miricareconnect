@@ -2451,7 +2451,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                         console.log("Before Firestore Set");
                         await firebase.firestore().collection('users').doc(user.uid).set(userData, {merge: true});
                         console.log("After Firestore Set");
-                        await onRegisterSuccess(userData);
+                        onRegisterSuccess(userData);
                         console.log("After Register Success");
                         alert(t('register_success'));
                         onClose();
@@ -2654,7 +2654,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                             disabled={loading} 
                             className="w-full bg-[#3498db] text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all mt-6 uppercase tracking-widest disabled:opacity-50"
                         >
-                            {loading ? <i className="fas fa-spinner fa-spin"></i> : (mode === 'login' ? t('login') : t('register'))}
+                            {loading ? <i className="fas fa-spinner fa-spin"></i> : (mode === 'login' ? t('login') : 'Save')}
                         </button>
                     </form>
                 </div>
