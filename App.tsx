@@ -641,6 +641,16 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                                         rows={3}
                                     />
                                 </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Description</label>
+                                    <textarea 
+                                        placeholder="Add a description..." 
+                                        value={description} 
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                        rows={3}
+                                    />
+                                </div>
 
                                 <div className="space-y-2">
                                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2 flex justify-between items-center">
@@ -878,9 +888,96 @@ const PhotoChannelPage: React.FC<{ t: any, user: any }> = ({ t, user }) => {
                     </div>
                 </div>
             )}
+            {editPost && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-2xl font-black uppercase italic text-[#2c3e50]">Edit Post</h3>
+                                <button onClick={() => setEditPost(null)} className="text-gray-400 hover:text-gray-600 p-2">
+                                    <i className="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Category / Title</label>
+                                    <input 
+                                        type="text" 
+                                        value={editTitle} 
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">Description</label>
+                                    <textarea 
+                                        value={editDescription} 
+                                        onChange={(e) => setEditDescription(e.target.value)}
+                                        className="w-full p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                        rows={3}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2 flex justify-between items-center">
+                                        Photo Links
+                                        <button onClick={() => setEditPhotoLinks([...editPhotoLinks, ""])} className="text-[#3498db] hover:text-blue-600 transition-colors">
+                                            <i className="fas fa-plus-circle text-lg"></i>
+                                        </button>
+                                    </label>
+                                    {editPhotoLinks.map((link, index) => (
+                                        <div key={index} className="flex gap-2">
+                                            <input 
+                                                type="url" 
+                                                value={link} 
+                                                onChange={(e) => {
+                                                    const newLinks = [...editPhotoLinks];
+                                                    newLinks[index] = e.target.value;
+                                                    setEditPhotoLinks(newLinks);
+                                                }}
+                                                className="flex-1 p-4 rounded-2xl border-2 border-gray-100 outline-none focus:border-[#3498db] text-sm font-bold"
+                                            />
+                                            {editPhotoLinks.length > 1 && (
+                                                <button onClick={() => setEditPhotoLinks(editPhotoLinks.filter((_, i) => i !== index))} className="text-red-400 hover:text-red-500 p-2">
+                                                    <i className="fas fa-minus-circle"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={async () => {
+                                    setUploading(true);
+                                    try {
+                                        await firebase.firestore().collection('photo_channel').doc(editPost.id).update({
+                                            imageUrls: editPhotoLinks.filter(l => l.trim() !== ""),
+                                            title: editTitle,
+                                            description: editDescription
+                                        });
+                                        setEditPost(null);
+                                        alert("Post updated successfully!");
+                                    } catch (err: any) {
+                                        alert("Failed to update post: " + err.message);
+                                    } finally {
+                                        setUploading(false);
+                                    }
+                                }}
+                                disabled={uploading}
+                                className="w-full bg-[#3498db] text-white px-6 py-5 rounded-[2rem] font-black uppercase text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {uploading ? "Updating..." : "Update Post"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+
 
 const HomePage: React.FC<{ t: any, user: any, lang: Language }> = ({ t, user, lang }) => {
     // Announcement state removed as we use hardcoded content now
@@ -2255,6 +2352,42 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [googleUser, setGoogleUser] = useState<any>(null);
+
+    const signInWithGoogle = async () => {
+        setLoading(true); setError(null);
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await firebase.auth().signInWithPopup(provider);
+            const user = result.user;
+            
+            if (!user) throw new Error("No user found");
+            
+            const email = user.email ? user.email.toLowerCase() : "";
+            const isMoe = email.endsWith("@moe-dl.edu.my");
+            const isAdmin = email === 'admin@gmail.com';
+            const isKoperasi = email === 'koperasi@gmail.com';
+
+            if (!isMoe && !isAdmin && !isKoperasi) {
+                await firebase.auth().signOut();
+                alert("Please use your MOE account to log in");
+                setLoading(false);
+                return;
+            }
+
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                await onRegisterSuccess(userDoc.data());
+                onClose();
+            } else {
+                setGoogleUser(user);
+                setMode('register');
+            }
+        } catch (err: any) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
 
     const submit = async (dataInput: any, currentMode: 'login' | 'register', e: React.FormEvent) => {
         e.preventDefault();
@@ -2264,7 +2397,6 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
             if (currentMode === 'login') {
                 const { user } = await firebase.auth().signInWithEmailAndPassword(dataInput.email, dataInput.password);
                 
-                // Check and update secondCheck if verified
                 const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
                 if (userDoc.exists) {
                     const userData = userDoc.data();
@@ -2280,37 +2412,42 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                 const finalUserClass = classLevel === 'GURU' ? 'GURU' : `${classLevel}${classSection}`;
                 const formattedPhone = dataInput.phone.startsWith('60') ? dataInput.phone : `60${dataInput.phone.replace(/^0+/, '')}`;
 
-                // Validate all fields are filled
-                if (!dataInput.email || !dataInput.password || !dataInput.name || !dataInput.birthdate || !dataInput.phone || !classLevel || (classLevel !== 'GURU' && !classSection)) {
+                // Validate fields (handle googleUser registration)
+                if (!dataInput.name || !dataInput.birthdate || !dataInput.phone || !classLevel || (classLevel !== 'GURU' && !classSection) || (!googleUser && (!dataInput.email || !dataInput.password))) {
                     const msg = t('fill_all_fields');
                     alert(msg);
                     throw new Error(msg);
                 }
 
-                if (!dataInput.email.toLowerCase().endsWith("@moe-dl.edu.my") && dataInput.email !== 'admin@gmail.com' && dataInput.email !== 'koperasi@gmail.com') {
-                    const msg = t('moe_email_alert');
-                    alert(msg);
-                    throw new Error(msg);
+                let user;
+                if (googleUser) {
+                    user = googleUser;
+                } else {
+                    if (!dataInput.email.toLowerCase().endsWith("@moe-dl.edu.my") && dataInput.email !== 'admin@gmail.com' && dataInput.email !== 'koperasi@gmail.com') {
+                        const msg = t('moe_email_alert');
+                        alert(msg);
+                        throw new Error(msg);
+                    }
+                    const res = await firebase.auth().createUserWithEmailAndPassword(dataInput.email, dataInput.password);
+                    user = res.user;
                 }
-                const {user} = await firebase.auth().createUserWithEmailAndPassword(dataInput.email, dataInput.password);
                 
                 if (user) {
                     const now = new Date();
                     const rewardDateObj = new Date(now.getTime() - 60000);
                     const currentRewardDay = `${rewardDateObj.getFullYear()}-${String(rewardDateObj.getMonth() + 1).padStart(2, '0')}-${String(rewardDateObj.getDate()).padStart(2, '0')}`;
                     const userData = { 
-                        email: dataInput.email, displayName: dataInput.name, points: 10, birthdate: dataInput.birthdate, 
+                        email: googleUser ? googleUser.email : dataInput.email,
+                        displayName: dataInput.name, points: 10, birthdate: dataInput.birthdate, 
                         phone: formattedPhone, userClass: finalUserClass, 
-                        isAdmin: dataInput.email === 'admin@gmail.com',
-                        isKoperasi: dataInput.email === 'koperasi@gmail.com',
-                        password: dataInput.password,
+                        isAdmin: (googleUser ? googleUser.email : dataInput.email) === 'admin@gmail.com',
+                        isKoperasi: (googleUser ? googleUser.email : dataInput.email) === 'koperasi@gmail.com',
                         status: 'Verified',
                         secondCheck: '(verified)',
                         lastRewardDate: currentRewardDay
                     };
-                    await firebase.firestore().collection('users').doc(user.uid).set(userData);
+                    await firebase.firestore().collection('users').doc(user.uid).set(userData, {merge: true});
                     await onRegisterSuccess(userData);
-                    // Do not sign out, keep user logged in to redirect to home
                     alert(t('register_success'));
                     onClose();
                 }
@@ -2409,6 +2546,12 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                     )}
 
                     <form onSubmit={(e) => submit(data, mode, e)} className="space-y-4">
+                        {mode === 'login' && (
+                            <button type="button" onClick={signInWithGoogle} className="w-full bg-white border-2 border-gray-100 py-5 rounded-2xl font-black text-sm text-gray-600 shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+                                <i className="fab fa-google text-[#3498db]"></i> Sign In with Google
+                            </button>
+                        )}
+                        
                         {mode === 'register' && (
                             <>
                                 <div className="space-y-4">
@@ -2459,34 +2602,38 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
                             </>
                         )}
 
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">MOE Email</label>
-                            <input 
-                                type="email" 
-                                placeholder="m-xxxxxxxx@moe-dl.edu.my" 
-                                value={data.email} 
-                                onChange={e => setData({...data, email: e.target.value})} 
-                                className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" 
-                                required 
-                            />
-                        </div>
-                        
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('password')}</label>
-                            <div className="relative">
-                                <input 
-                                    type={showPassword ? "text" : "password"} 
-                                    placeholder="••••••••" 
-                                    value={data.password} 
-                                    onChange={e => setData({...data, password: e.target.value})} 
-                                    className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" 
-                                    required 
-                                />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#3498db]">
-                                    <i className={`fas fa-${showPassword ? 'eye-slash' : 'eye'}`}></i>
-                                </button>
-                            </div>
-                        </div>
+                        {(!googleUser || mode === 'login') && (
+                            <>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">MOE Email</label>
+                                    <input 
+                                        type="email" 
+                                        placeholder="m-xxxxxxxx@moe-dl.edu.my" 
+                                        value={data.email} 
+                                        onChange={e => setData({...data, email: e.target.value})} 
+                                        className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" 
+                                        required 
+                                    />
+                                </div>
+                                
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2">{t('password')}</label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showPassword ? "text" : "password"} 
+                                            placeholder="••••••••" 
+                                            value={data.password} 
+                                            onChange={e => setData({...data, password: e.target.value})} 
+                                            className="w-full bright-input p-4 rounded-2xl outline-none font-bold text-sm" 
+                                            required 
+                                        />
+                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-[#3498db]">
+                                            <i className={`fas fa-${showPassword ? 'eye-slash' : 'eye'}`}></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                         
                         <button 
                             disabled={loading} 
@@ -3510,6 +3657,19 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
         }
     }, [activeTab]);
 
+    useEffect(() => {
+        if (activeTab === 'points') {
+            const db = firebase.firestore();
+            const unsubscribe = db.collection('point_transactions')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    const transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setPointTransactions(transactions);
+                });
+            return () => unsubscribe();
+        }
+    }, [activeTab]);
+
     const filteredUsers = useMemo(() => {
         if (!searchQuery) return data.users;
         const q = searchQuery.toLowerCase();
@@ -4087,6 +4247,36 @@ const AdminPanelContent: React.FC<{t: any, user: any | null, isKoperasiMenu?: bo
                                 </div>
                                 <div className="text-[10px] text-gray-400 mt-1 font-medium italic">{t.reason || 'No reason provided'}</div>
                                 <div className="text-[8px] text-gray-300 mt-1">{t.createdAt?.toDate().toLocaleString()}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {activeTab === 'history' && isAdmin && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Redemption History</h3>
+                            <button 
+                                onClick={async () => {
+                                    if (!window.confirm("Are you sure you want to delete all redemption history?")) return;
+                                    const db = firebase.firestore();
+                                    const batch = db.batch();
+                                    data.redemptions.forEach(r => batch.delete(db.collection('redeem_history').doc(r.id)));
+                                    await batch.commit();
+                                    alert("History cleared!");
+                                }}
+                                className="bg-red-500 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 transition-all"
+                            >
+                                Delete All
+                            </button>
+                        </div>
+                        {data.redemptions.length === 0 ? <p className="text-[10px] text-gray-300 italic px-1">{t('nothing_here')}</p> : data.redemptions.map(r => (
+                            <div key={r.id} className="bg-white p-4 border border-gray-100 rounded-2xl">
+                                <div className="flex justify-between items-center">
+                                    <div className="font-black text-[11px] text-[#2c3e50]">{r.userName}</div>
+                                    <div className="font-black text-[11px] text-[#3498db]">{r.itemName}</div>
+                                </div>
+                                <div className="text-[10px] text-gray-400 mt-1 font-medium italic">Code: {r.rdCode} | Status: {r.status}</div>
+                                <div className="text-[8px] text-gray-300 mt-1">{r.redeemedAt?.toDate().toLocaleString()}</div>
                             </div>
                         ))}
                     </div>
