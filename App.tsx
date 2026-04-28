@@ -2382,6 +2382,7 @@ const AuthModal: React.FC<{onClose: () => void, t: any, lang: Language, onRegist
             } else {
                 setGoogleUser(user);
                 setMode('register');
+                setLoading(false);
             }
         } catch (err: any) {
             setError(err.message);
